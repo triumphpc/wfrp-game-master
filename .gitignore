@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Файлы с токенами и секретами
+.env
+*.env
+*_token*
+*_secret*
+
+# Временные файлы
+*.tmp
+*.bak
+*.log
+
+# PDF файлы (большие)
+*.pdf
+
+# Генерируемые файлы
+wfrp_character_cards.pdf
