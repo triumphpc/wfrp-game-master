@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "mcp__RAG-MCP-Server__search_relevant_code"
+      "mcp__RAG-MCP-Server__search_relevant_code",
+      "mcp__RAG-MCP-Server__index_repository"
     ]
   }
 }

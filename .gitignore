@@ -35,4 +35,4 @@ Thumbs.db
 *.pdf
 
 # Генерируемые файлы
-wfrp_character_cards.pdf
+docs/wfrp_character_cards.pdf
