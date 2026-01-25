@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "mcp__RAG-MCP-Server__search_relevant_code",
-      "mcp__RAG-MCP-Server__index_repository"
+      "mcp__RAG-MCP-Server__index_repository",
+      "Skill(check)",
+      "Bash(ls:*)",
+      "Bash(python3:*)"
     ]
   }
 }
