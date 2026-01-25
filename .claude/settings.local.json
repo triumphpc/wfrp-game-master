@@ -5,7 +5,9 @@
       "mcp__RAG-MCP-Server__index_repository",
       "Skill(check)",
       "Bash(ls:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(mkdir:*)",
+      "Bash(cat:*)"
     ]
   }
 }
