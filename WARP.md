@@ -97,9 +97,9 @@ history/
 ### ДЛЯ НОВОЙ ИГРОВОЙ СЕССИИ:
 
 #### Шаг 1: Активация агентов
-1. **MASTER-AGENT** использует [`.claude/agents/GM.md`](.claude/agents/GM.md)
-2. **CHECKER-AGENT** использует [`.claude/agents/CH.md`](.claude/agents/CH.md) с доступом к RAG-MCP-SERVER
-3. **LOGGER-AGENT** использует [`.claude/agents/LG.md`](.claude/agents/LG.md)
+1. **MASTER-AGENT** использует [`.claude/agents/GM.md`](.claude/agents/archive/GM.old.md)
+2. **CHECKER-AGENT** использует [`.claude/agents/CH.md`](.claude/agents/archive/CH.old.md) с доступом к RAG-MCP-SERVER
+3. **LOGGER-AGENT** использует [`.claude/agents/LG.md`](.claude/agents/archive/LG.old.md)
 
 #### Шаг 2: Подготовка персонажей
 - Прочитать [`rules/СОЗДАНИЕ_ПЕРСОНАЖА.md`](rules/СОЗДАНИЕ_ПЕРСОНАЖА.md) для правильного создания
@@ -113,9 +113,9 @@ history/
 
 ### ДЛЯ ТЕКУЩИЙ ИГРОВНОЙ СЕССИИ
 - Если поступает команда: давай продолжим игру [название игры]: Активация агентов
-1. **MASTER-AGENT** использует [`.claude/agents/GM.md`](.claude/agents/GM.md)
-2. **CHECKER-AGENT** использует [`.claude/agents/CH.md`](.claude/agents/CH.md) с доступом к RAG-MCP-SERVER
-3. **LOGGER-AGENT** использует [`.claude/agents/LG.md`](.claude/agents/LG.md)
+1. **MASTER-AGENT** использует [`.claude/agents/GM.md`](.claude/agents/archive/GM.old.md)
+2. **CHECKER-AGENT** использует [`.claude/agents/CH.md`](.claude/agents/archive/CH.old.md) с доступом к RAG-MCP-SERVER
+3. **LOGGER-AGENT** использует [`.claude/agents/LG.md`](.claude/agents/archive/LG.old.md)
 - И продолжай игру от имени GM.
 
 ---

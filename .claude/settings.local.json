@@ -7,7 +7,8 @@
       "Bash(ls:*)",
       "Bash(python3:*)",
       "Bash(mkdir:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Skill(start-wfrp-game)"
     ]
   }
 }

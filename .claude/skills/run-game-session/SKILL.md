@@ -6,8 +6,15 @@ description: Проведение игровой сессии с тремя аг
 # Проведение игровой сессии
 
 ## Трех-агентная модель:
-GM (ведущий) ←→ Checker (проверяющий) ←→ Logger (логирующий)
+GM (`.claude/agents/GM.md`) ←→ Checker (`.claude/agents/CHECKER.md`) ←→ Logger (`.claude/agents/LOGGER.md`)
 
+##  При боях
+GM (`.claude/agents/GM.md`) ←→ Checker-battle (`.claude/agents/CHECKER-battle.md`) ←→ Logger (`.claude/agents/LOGGER-battle.md`)
+
+##  При социальном взаимодействии 
+GM-social (`.claude/agents/GM-social.md`) ←→ Checker (`.claude/agents/CHECKER.md`) ←→ Logger (`.claude/agents/LOGGER.md`)
+
+## При 
 ## Phase 1: Подготовка сессии
 1. GM загружает контекст предыдущей сессии
 2. Checker проверяет актуальность данных персонажей
