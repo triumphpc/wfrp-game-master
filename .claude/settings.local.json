@@ -8,7 +8,9 @@
       "Bash(python3:*)",
       "Bash(mkdir:*)",
       "Bash(cat:*)",
-      "Skill(start-wfrp-game)"
+      "Skill(start-wfrp-game)",
+      "Skill(load-existing-campaign)",
+      "Bash(find:*)"
     ]
   }
 }
