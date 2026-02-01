@@ -102,7 +102,7 @@ history/
 3. **LOGGER-AGENT** использует [`.claude/agents/LG.md`](.claude/agents/archive/LG.old.md)
 
 #### Шаг 2: Подготовка персонажей
-- Прочитать [`rules/СОЗДАНИЕ_ПЕРСОНАЖА.md`](rules/СОЗДАНИЕ_ПЕРСОНАЖА.md) для правильного создания
+- Прочитать [`.claude/skills/create-character/SKILL.md`](.claude/skills/create-character/SKILL.md) для правильного создания
 - Проверить схемы карьер в [`КАРЬЕРЫ_ПРАВИЛЬНЫЕ_СХЕМЫ.md`](rules/КАРЬЕРЫ_ПРАВИЛЬНЫЕ_СХЕМЫ.md)
 - Использовать таблицы из [`ТАБЛИЦЫ_БЫСТРЫЙ_ДОСТУП.md`](rules/ТАБЛИЦЫ_БЫСТРЫЙ_ДОСТУП.md)
 
