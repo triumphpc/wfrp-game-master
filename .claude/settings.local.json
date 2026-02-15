@@ -10,7 +10,17 @@
       "Bash(cat:*)",
       "Skill(start-wfrp-game)",
       "Skill(load-existing-campaign)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(git fetch:*)",
+      "Bash(~/.claude/.specify/scripts/bash/create-new-feature.sh:*)",
+      "Bash(~/.claude/.specify/scripts/bash/check-prerequisites.sh:*)",
+      "Bash(~/.claude/.specify/scripts/bash/setup-plan.sh:*)",
+      "Bash(~/.claude/.specify/scripts/bash/create-tasks.sh:*)",
+      "Bash(go build:*)",
+      "Bash(go mod tidy:*)",
+      "Bash(git add:*)",
+      "Bash(git restore:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
