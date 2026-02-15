@@ -66,27 +66,27 @@
 
 **⚠️ КРИТИЧЕСКИ**: Никакая работа по user stories не может начинаться до завершения этого этапа
 
-- [ ] T006 Создать пакет config в bot/config/ для загрузки конфигурации
-- [ ] T007 Создать пакет llm в bot/llm/ для интеграции провайдеров
-- [ ] T008 Создать интерфейс провайдера (Provider interface) в bot/llm/provider.go
-- [ ] T009 [P] Создать реализацию для z.ai провайдера в bot/llm/zai.go
-- [ ] T010 [P] Создать реализацию для minimax провайдера в bot/llm/minimax.go
-- [ ] T011 [P] Создать реализацию для OpenAI-compatible провайдеров в bot/llm/openai.go
-- [ ] T012 Создать пакет telegram в bot/telegram/ для интеграции с Telegram Bot API
-- [ ] T013 [P] Создать базовый обработчик команд в bot/telegram/handlers.go
-- [ ] T014 [P] Создать middleware для rate limiting и logging в bot/telegram/middleware.go
-- [ ] T015 [P] Создать обработчик стриминга для длинных сообщений в bot/telegram/streaming.go
-- [ ] T016 Создать пакет game в bot/game/ для игровой логики
-- [ ] T017 [P] Создать структуру сессии в bot/game/session.go
-- [ ] T018 [P] Создать обработчик карточек персонажей в bot/game/character.go
-- [ ] T019 [P] Создать загрузчик контекста в bot/game/context.go
-- [ ] T020 Создать интеграцию с RAG-MCP-Server для проверки правил в bot/game/rag.go
-- [ ] T021 Создать пакет storage в bot/storage/ для файлового хранилища
-- [ ] T022 [P] Создать парсер Markdown файлов в bot/storage/markdown.go
-- [ ] T023 [P] Создать менеджер кампаний в bot/storage/campaign.go
-- [ ] T024 [P] Создать менеджер истории сессий в bot/storage/history.go
-- [ ] T025 Создать пример конфигурационного файла config/.env.example
-- [ ] T026 Создать README.md с инструкциями по установке и запуску
+- [x] T006 Создать пакет config в bot/config/ для загрузки конфигурации
+- [x] T007 Создать пакет llm в bot/llm/ для интеграции провайдеров
+- [x] T008 Создать интерфейс провайдера (Provider interface) в bot/llm/provider.go
+- [x] T009 [P] Создать реализацию для z.ai провайдера в bot/llm/zai.go
+- [x] T010 [P] Создать реализацию для minimax провайдера в bot/llm/minimax.go
+- [x] T011 [P] Создать реализацию для OpenAI-compatible провайдеров в bot/llm/openai.go
+- [x] T012 Создать пакет telegram в bot/telegram/ для интеграции с Telegram Bot API
+- [x] T013 [P] Создать базовый обработчик команд в bot/telegram/handlers.go
+- [x] T014 [P] Создать middleware для rate limiting и logging в bot/telegram/middleware.go
+- [x] T015 [P] Создать обработчик стриминга для длинных сообщений в bot/telegram/streaming.go
+- [x] T016 Создать пакет game в bot/game/ для игровой логики
+- [x] T017 [P] Создать структуру сессии в bot/game/session.go
+- [x] T018 [P] Создать обработчик карточек персонажей в bot/game/character.go
+- [x] T019 [P] Создать загрузчик контекста в bot/game/context.go
+- [x] T020 Создать интеграцию с RAG-MCP-Server для проверки правил в bot/game/rag.go
+- [x] T021 Создать пакет storage в bot/storage/ для файлового хранилища
+- [x] T022 [P] Создать парсер Markdown файлов в bot/storage/markdown.go
+- [x] T023 [P] Создать менеджер кампаний в bot/storage/campaign.go
+- [x] T024 [P] Создать менеджер истории сессий в bot/storage/history.go
+- [x] T025 Создать пример конфигурационного файла config/.env.example
+- [x] T026 Создать README.md с инструкциями по установке и запуску
 
 **Checkpoint**: Базовая инфраструктура готова — теперь могут начинаться user stories
 
@@ -106,7 +106,7 @@
 - [ ] T030 [US1] Добавить middleware для rate limiting в bot/telegram/middleware.go
 - [ ] T031 [US1] Добавить middleware для логирования в bot/telegram/middleware.go
 - [ ] T032 [US1] Реализовать отправку сообщений через Telegram Bot API в bot/telegram/
-- [ ] T033 [US1] Обработывать входящие сообщения от игроков в bot/game/session.go
+- [ ] T033 [US1] Обрабатывать входящие сообщения от игроков в bot/game/session.go
 - [ ] T034 [US1] Формировать запрос к LLM при получении сообщения от игрока в bot/game/session.go
 - [ ] T035 [US1] Отправлять ответы LLM игрокам в группу в bot/telegram/
 - [ ] T036 [US1] Обновлять карточку персонажа согласно правилам после действий в bot/game/character.go
