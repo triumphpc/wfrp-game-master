@@ -52,11 +52,11 @@
 
 **Purpose**: Инициализация проекта и базовая структура
 
-- [ ] T001 Создать структуру проекта в соответствии с implementation plan
-- [ ] T002 Инициализировать Go модуль с зависимостями (go.mod)
-- [ ] T003 [P] Добавить зависимость github.com/Varbyt/go-telegram-bot-api/v5
-- [ ] T004 [P] Добавить зависимость OpenAI Go SDK
-- [ ] T005 [P] Настроить .gitignore для Go проекта
+- [x] T001 Создать структуру проекта в соответствии с implementation plan
+- [x] T002 Инициализировать Go модуль с зависимостями (go.mod)
+- [x] T003 [P] Добавить зависимость github.com/Varbyt/go-telegram-bot-api/v5
+- [x] T004 [P] Добавить зависимость OpenAI Go SDK
+- [x] T005 [P] Настроить .gitignore для Go проекта → Artifacts: [config/config.go](/Users/s.vrulin/Devel/wfrp-game-master/config/config.go), [llm/provider.go](/Users/s.vrulin/Devel/wfrp-game-master/llm/provider.go), [main.go](/Users/s.vrulin/Devel/wfrp-game-master/main.go)
 
 ---
 
