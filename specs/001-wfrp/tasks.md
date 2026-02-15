@@ -100,13 +100,13 @@
 
 ### Implementation for User Story 1
 
-- [ ] T027 [US1] Реализовать функцию проверки вводных данных каждую секунду в bot/game/session.go
-- [ ] T028 [US1] Реализовать обработчик команды /start для начала игры в bot/telegram/handlers.go
-- [ ] T029 [US1] Реализовать обработчик команды /help для справки по командам в bot/telegram/handlers.go
-- [ ] T030 [US1] Добавить middleware для rate limiting в bot/telegram/middleware.go
-- [ ] T031 [US1] Добавить middleware для логирования в bot/telegram/middleware.go
-- [ ] T032 [US1] Реализовать отправку сообщений через Telegram Bot API в bot/telegram/
-- [ ] T033 [US1] Обрабатывать входящие сообщения от игроков в bot/game/session.go
+- [x] T027 [US1] Реализовать функцию проверки вводных данных каждую секунду в bot/game/session.go
+- [x] T028 [US1] Реализовать обработчик команды /start для начала игры в bot/telegram/handlers.go
+- [x] T029 [US1] Реализовать обработчик команды /help для справки по командам в bot/telegram/handlers.go
+- [x] T030 [US1] Добавить middleware для rate limiting в bot/telegram/middleware.go
+- [x] T031 [US1] Добавить middleware для логирования в bot/telegram/middleware.go
+- [x] T032 [US1] Реализовать отправку сообщений через Telegram Bot API в bot/telegram/
+- [x] T033 [US1] Обрабатывать входящие сообщения от игроков в bot/game/session.go
 - [ ] T034 [US1] Формировать запрос к LLM при получении сообщения от игрока в bot/game/session.go
 - [ ] T035 [US1] Отправлять ответы LLM игрокам в группу в bot/telegram/
 - [ ] T036 [US1] Обновлять карточку персонажа согласно правилам после действий в bot/game/character.go
