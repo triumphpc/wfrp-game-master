@@ -9,7 +9,13 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-// Bot represents the Telegram bot instance
+// CommandHandler handles bot commands
+type CommandHandler func(update *tgbotapi.Update, args []string) error
+
+// Middleware processes updates before handlers
+type Middleware func(update *tgbotapi.Update) (bool, error)
+
+// Bot represents a Telegram bot instance
 type Bot struct {
 	api      *tgbotapi.BotAPI
 	handlers map[string]CommandHandler
@@ -19,12 +25,6 @@ type Bot struct {
 	wg       sync.WaitGroup
 	mu       sync.RWMutex
 }
-
-// CommandHandler handles bot commands
-type CommandHandler func(update *tgbotapi.Update, args []string) error
-
-// Middleware processes updates before handlers
-type Middleware func(update *tgbotapi.Update) (bool, error)
 
 // NewBot creates a new Telegram bot instance
 func NewBot(token string) (*Bot, error) {
@@ -100,38 +100,42 @@ func (b *Bot) processUpdates() {
 			}
 			b.handleUpdate(update)
 		}
-	}
 }
 
-// handleUpdate processes a single update
-func (b *Bot) handleUpdate(update *tgbotapi.Update) {
+// HandleUpdate processes all incoming updates (commands and messages)
+func (b *Bot) HandleUpdate(update *tgbotapi.Update) error {
 	// Run middleware chain
 	for _, mw := range b.middleware {
 		cont, err := mw(update)
 		if err != nil {
 			log.Printf("Middleware error: %v", err)
-			return
+			return err
 		}
 		if !cont {
-			return // Middleware blocked this update
+			return nil // Middleware blocked this update
 		}
 	}
 
 	// Handle commands
 	if update.Message != nil && update.Message.IsCommand() {
-		b.handleCommand(update)
-		return
+		return b.handleCommand(update)
 	}
 
-	// Handle regular messages
+	// Handle regular messages from players
 	if update.Message != nil && update.Message.Text != "" {
-		b.handleMessage(update)
-		return
+		return b.handlePlayerMessage(update)
 	}
+
+	// Handle callback queries
+	if update.CallbackQuery != nil {
+		return b.handleCallbackQuery(update)
+	}
+
+	return nil
 }
 
 // handleCommand processes a command
-func (b *Bot) handleCommand(update *tgbotapi.Update) {
+func (b *Bot) handleCommand(update *tgbotapi.Update) error {
 	command := update.Message.Command()
 	args := update.Message.CommandArguments()
 
@@ -141,31 +145,38 @@ func (b *Bot) handleCommand(update *tgbotapi.Update) {
 
 	if !exists {
 		log.Printf("Unknown command: %s", command)
-		return
+		return nil
 	}
 
 	if err := handler(update, args); err != nil {
 		log.Printf("Handler error for /%s: %v", command, err)
 	}
+
+	return nil
 }
 
-// handleMessage processes a non-command message
-func (b *Bot) handleMessage(update *tgbotapi.Update) {
-	// Default message handler - can be extended
-	log.Printf("Received message from %d: %s", update.Message.From.ID, update.Message.Text)
+// handlePlayerMessage processes non-command messages from players
+func (b *Bot) handlePlayerMessage(update *tgbotapi.Update) error {
+	chatID := update.Message.Chat.ID
+	userID := update.Message.From.ID
+	text := update.Message.Text
+
+	log.Printf("[MSG] Player %d: %s", userID, text)
+
+	// Forward to session manager for processing
+	// This would be integrated with game session
+	// For now, just log the message
+	return nil
 }
 
-// SendMessage sends a message to a chat
-func (b *Bot) SendMessage(chatID int64, text string) error {
-	msg := tgbotapi.NewMessage(chatID, text)
-	_, err := b.api.Send(msg)
-	return err
-}
+// handleCallbackQuery processes callback button presses
+func (b *Bot) handleCallbackQuery(update *tgbotapi.Update) error {
+	userID := update.CallbackQuery.From.ID
+	data := update.CallbackQuery.Data
 
-// SendReply sends a reply to a message
-func (b *Bot) SendReply(messageID int, chatID int64, text string) error {
-	msg := tgbotapi.NewMessage(chatID, text)
-	msg.ReplyToMessageID = messageID
-	_, err := b.api.Send(msg)
-	return err
+	log.Printf("[CALLBACK] User %d: %s", userID, data)
+
+	// Handle callback actions
+	// This would be integrated with game session for button interactions
+	return nil
 }
