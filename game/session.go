@@ -220,9 +220,36 @@ func (s *Session) checkInputsLoop() {
 		case <-s.ctx.Done():
 			return
 		case <-ticker.C:
+			// Check for new player inputs every second
+			if hasInput, err := s.CheckInputs(); err != nil {
+				log.Printf("[SESSION] Input check error: %v", err)
+			} else if hasInput {
+				// Process new inputs if found
+				s.ProcessNewInputs()
+			}
 			s.checkTimeout()
 		}
 	}
+}
+
+// CheckInputs checks for new player inputs
+func (s *Session) CheckInputs() (bool, error) {
+	// This is a placeholder implementation
+	// In a real implementation, this would check:
+	// - Incoming Telegram messages
+	// - Character card updates
+	// - Game state changes
+	// Return true if new inputs are found
+	return false, nil
+}
+
+// ProcessNewInputs processes newly detected inputs
+func (s *Session) ProcessNewInputs() {
+	// Process queued inputs
+	// This would trigger ProcessInput for each detected input
+	s.mu.Lock()
+	s.UpdateActivity()
+	s.mu.Unlock()
 }
 
 // checkTimeout checks if session has timed out
