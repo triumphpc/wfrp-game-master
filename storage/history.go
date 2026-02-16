@@ -3,6 +3,7 @@ package storage
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -46,8 +47,10 @@ func (hm *HistoryManager) CreateSession(campaign, title string) (*SessionRecord,
 	sessionID := now.Format("2006-01-02_15-04")
 	if title != "" {
 		sessionID += "_" + strings.Map(func(r rune) rune {
-			if strings.ContainsAny(":?*<>|\"", []string{":", "?", "*", "<", ">", "|", "\""}) {
-				return '_'
+			for _, ch := range []string{":", "?", "*", "<", ">", "|", "\""} {
+				if r == rune(ch[0]) {
+					return '_'
+				}
 			}
 			return r
 		}, title)

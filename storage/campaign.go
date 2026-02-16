@@ -207,7 +207,7 @@ func (cm *CampaignManager) Refresh() error {
 			campInfo = &Campaign{
 				Name:         campName,
 				Path:         campPath,
-				LastModified: entry.ModTime(),
+				LastModified: info.ModTime(),
 			}
 		}
 
@@ -357,7 +357,3 @@ func (cm *CampaignManager) SavePartySummary(campaign, summary string) error {
 
 	return cm.parser.WriteFile(summaryPath, summary)
 }
-
-import (
-	"sync"
-)
