@@ -107,9 +107,9 @@
 - [x] T031 [US1] Добавить middleware для логирования в bot/telegram/middleware.go
 - [x] T032 [US1] Реализовать отправку сообщений через Telegram Bot API в bot/telegram/
 - [x] T033 [US1] Обрабатывать входящие сообщения от игроков в bot/game/session.go
-- [ ] T034 [US1] Формировать запрос к LLM при получении сообщения от игрока в bot/game/session.go
-- [ ] T035 [US1] Отправлять ответы LLM игрокам в группу в bot/telegram/
-- [ ] T036 [US1] Обновлять карточку персонажа согласно правилам после действий в bot/game/character.go
+- [x] T034 [US1] Формировать запрос к LLM при получении сообщения от игрока в bot/game/session.go
+- [x] T035 [US1] Отправлять ответы LLM игрокам в группу в bot/telegram/
+- [x] T036 [US1] Обновлять карточку персонажа согласно правилам после действий в bot/game/character.go
 
 **Checkpoint**: В этот момент US1 (Telegram Bot Integration) должен быть полностью функционален и тестируем.
 
