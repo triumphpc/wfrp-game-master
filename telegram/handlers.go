@@ -2,28 +2,32 @@
 package telegram
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
+	"wfrp-bot/config"
 	"wfrp-bot/game"
+	"wfrp-bot/llm"
 	"wfrp-bot/storage"
 )
 
 // Command handlers for WFRP bot
 type CommandHandlers struct {
-	bot         *Bot
-	sessionMgr   *game.SessionManager
-	charMgr      *game.CharacterManager
-	storageMgr   *storage.CampaignManager
+	bot        *Bot
+	sessionMgr *game.SessionManager
+	charMgr    *game.CharacterManager
+	storageMgr *storage.CampaignManager
 }
 
 // NewCommandHandlers creates a new command handlers instance
 func NewCommandHandlers(bot *Bot, sessionMgr *game.SessionManager, charMgr *game.CharacterManager, storageMgr *storage.CampaignManager) *CommandHandlers {
 	return &CommandHandlers{
-		bot:       bot,
+		bot:        bot,
 		sessionMgr: sessionMgr,
 		charMgr:    charMgr,
 		storageMgr: storageMgr,
@@ -37,7 +41,6 @@ func (h *CommandHandlers) StartCommand(update *tgbotapi.Update, args []string) e
 	}
 
 	chatID := update.Message.Chat.ID
-	userID := fmt.Sprintf("%d", update.Message.From.ID)
 
 	// Check if campaign is provided
 	campaign := ""
@@ -64,8 +67,25 @@ func (h *CommandHandlers) StartCommand(update *tgbotapi.Update, args []string) e
 		return h.bot.SendMessage(chatID, builder.String())
 	}
 
+	// Load configuration
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return h.bot.SendMessage(chatID, fmt.Sprintf("Ошибка загрузки конфигурации: %v", err))
+	}
+
+	// Create LLM provider
+	provider, err := llm.NewProviderFromConfig(&llm.ProviderConfig{
+		Name:    cfg.DefaultProvider,
+		APIKey:  cfg.Providers[cfg.DefaultProvider].APIKey,
+		BaseURL: cfg.Providers[cfg.DefaultProvider].BaseURL,
+		Model:   cfg.Providers[cfg.DefaultProvider].Model,
+	})
+	if err != nil {
+		return h.bot.SendMessage(chatID, fmt.Sprintf("Ошибка инициализации LLM провайдера: %v", err))
+	}
+
 	// Create new session for campaign
-	session := game.NewSession(update.Message.Chat.ID, campaign, nil) // LLM provider needed
+	session := game.NewSession(context.Background(), chatID, campaign, provider)
 	session.Start()
 
 	h.sessionMgr.AddSession(chatID, session)
@@ -159,10 +179,11 @@ func (h *CommandHandlers) CharacterCommand(update *tgbotapi.Update, args []strin
 	}
 
 	charName := args[0]
+	playerID := fmt.Sprintf("%d", update.Message.From.ID)
 	charPath := fmt.Sprintf("%s.md", charName)
 
 	// Load character from storage
-	char, err := h.charMgr.LoadCharacter(chatID, charPath)
+	char, err := h.charMgr.LoadCharacter(playerID, charPath)
 	if err != nil {
 		return h.bot.SendMessage(chatID, fmt.Sprintf("Ошибка загрузки карточки: %v", err))
 	}
@@ -178,8 +199,9 @@ func (h *CommandHandlers) formatCharacterCard(char *game.Character) string {
 
 	builder.WriteString(fmt.Sprintf("# %s\n\n", char.Name))
 
-	if char.Stats != nil {
-		stats := char.Stats
+	// Parse character stats from sheet
+	stats, _ := game.ParseCharacterStats(char.Sheet)
+	if stats != nil {
 		builder.WriteString("## Характеристики\n")
 		builder.WriteString(fmt.Sprintf("• В: %d | С: %d\n", stats.WS, stats.BS))
 		builder.WriteString(fmt.Sprintf("• S: %d | Инт: %d\n", stats.S, stats.Int))

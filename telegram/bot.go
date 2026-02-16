@@ -17,13 +17,14 @@ type Middleware func(update *tgbotapi.Update) (bool, error)
 
 // Bot represents a Telegram bot instance
 type Bot struct {
-	api      *tgbotapi.BotAPI
-	handlers map[string]CommandHandler
-	middleware []Middleware
-	updates  <-chan tgbotapi.Update
-	stopChan chan struct{}
-	wg       sync.WaitGroup
-	mu       sync.RWMutex
+	api            *tgbotapi.BotAPI
+	handlers       map[string]CommandHandler
+	middleware     []Middleware
+	updates        <-chan tgbotapi.Update
+	stopChan       chan struct{}
+	wg             sync.WaitGroup
+	mu             sync.RWMutex
+	sessionManager *SessionManager
 }
 
 // NewBot creates a new Telegram bot instance
@@ -158,14 +159,25 @@ func (b *Bot) handleCommand(update *tgbotapi.Update) error {
 // handlePlayerMessage processes non-command messages from players
 func (b *Bot) handlePlayerMessage(update *tgbotapi.Update) error {
 	chatID := update.Message.Chat.ID
-	userID := update.Message.From.ID
+	userID := fmt.Sprintf("%d", update.Message.From.ID)
 	text := update.Message.Text
 
 	log.Printf("[MSG] Player %d: %s", userID, text)
 
-	// Forward to session manager for processing
-	// This would be integrated with game session
-	// For now, just log the message
+	if b.sessionManager == nil {
+		return b.SendMessage(chatID, "Сессия не инициализирована. Используйте /start для начала игры.")
+	}
+
+	output, err := b.sessionManager.ProcessPlayerMessage(chatID, userID, text)
+	if err != nil {
+		log.Printf("[BOT] Failed to process player message: %v", err)
+		return b.SendMessage(chatID, fmt.Sprintf("Ошибка обработки сообщения: %v", err))
+	}
+
+	if output != nil {
+		return b.SendMessage(chatID, output.Content)
+	}
+
 	return nil
 }
 
@@ -179,4 +191,58 @@ func (b *Bot) handleCallbackQuery(update *tgbotapi.Update) error {
 	// Handle callback actions
 	// This would be integrated with game session for button interactions
 	return nil
+}
+
+// SendMessage sends a text message to a chat
+func (b *Bot) SendMessage(chatID int64, text string) error {
+	msg := tgbotapi.NewMessage(chatID, text)
+	msg.ParseMode = "Markdown"
+
+	_, err := b.api.Send(msg)
+	if err != nil {
+		log.Printf("[SEND] Failed to send message to %d: %v", chatID, err)
+		return err
+	}
+
+	log.Printf("[SEND] Message sent to %d: %q", chatID, truncateText(text, 50))
+	return nil
+}
+
+// SendReply sends a reply to a specific message
+func (b *Bot) SendReply(messageID int, chatID int64, text string) error {
+	msg := tgbotapi.NewMessage(chatID, text)
+	msg.ParseMode = "Markdown"
+	msg.ReplyToMessageID = messageID
+
+	_, err := b.api.Send(msg)
+	if err != nil {
+		log.Printf("[REPLY] Failed to send reply to %d: %v", chatID, err)
+		return err
+	}
+
+	log.Printf("[REPLY] Reply sent to %d for message %d: %q", chatID, messageID, truncateText(text, 50))
+	return nil
+}
+
+// SendEdit edits an existing message
+func (b *Bot) SendEdit(messageID int, chatID int64, text string) error {
+	msg := tgbotapi.NewEditMessageText(chatID, int(messageID), text)
+	msg.ParseMode = "Markdown"
+
+	_, err := b.api.Send(msg)
+	if err != nil {
+		log.Printf("[EDIT] Failed to edit message %d in %d: %v", messageID, chatID, err)
+		return err
+	}
+
+	log.Printf("[EDIT] Message %d edited in %d", messageID, chatID)
+	return nil
+}
+
+// truncateText truncates text for logging purposes
+func truncateText(text string, maxLen int) string {
+	if len(text) <= maxLen {
+		return text
+	}
+	return text[:maxLen] + "..."
 }
