@@ -5,11 +5,11 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 	"sync"
 	"time"
 
 	"wfrp-bot/llm"
-	"wfrp-bot/telegram"
 )
 
 // Session represents an active game session
@@ -22,22 +22,22 @@ type Session struct {
 	StartTime    time.Time
 	LastActivity time.Time
 
-	mu             sync.RWMutex
-	llmProvider    llm.LLMProvider
-	promptBuilder  *PromptBuilder
-	ruleChecker    *RuleChecker
-	ctx            context.Context
-	cancel         context.CancelFunc
+	mu            sync.RWMutex
+	llmProvider   llm.LLMProvider
+	promptBuilder *PromptBuilder
+	ruleChecker   *RuleChecker
+	ctx           context.Context
+	cancel        context.CancelFunc
 }
 
-// SessionState represents the current state of the game session
+// SessionState represents of current state of game session
 type SessionState int
 
 const (
-	StateIdle      SessionState = iota // Waiting for input
-	StateActive                       // Game in progress
-	StateProcessing                  // Processing input
-	StatePaused                      // Paused
+	StateIdle       SessionState = iota // Waiting for input
+	StateActive                         // Game in progress
+	StateProcessing                     // Processing input
+	StatePaused                         // Paused
 )
 
 // Character represents a player's character
@@ -51,26 +51,26 @@ type Character struct {
 
 // InputData represents game input data
 type InputData struct {
-	Source     string // "player", "gm", "system"
-	Content    string
-	Timestamp  time.Time
-	Metadata   map[string]interface{}
+	Source    string // "player", "gm", "system"
+	Content   string
+	Timestamp time.Time
+	Metadata  map[string]interface{}
 }
 
 // GameOutput represents output to players
 type GameOutput struct {
-	Source     string
-	Content    string
-	IsAction   bool
-	Timestamp  time.Time
+	Source    string
+	Content   string
+	IsAction  bool
+	Timestamp time.Time
 }
 
 // PromptBuilder constructs LLM prompts
 type PromptBuilder struct {
-	campaign    string
-	scenario    string
-	characters  []*Character
-	rules       []string
+	campaign   string
+	scenario   string
+	characters []*Character
+	rules      []string
 }
 
 // NewSession creates a new game session
@@ -89,9 +89,9 @@ func NewSession(ctx context.Context, groupID int64, campaign string, provider ll
 		promptBuilder: &PromptBuilder{
 			campaign: campaign,
 		},
-		ruleChecker:   NewRuleChecker(),
-		ctx:           sessionCtx,
-		cancel:        cancel,
+		ruleChecker: NewRuleChecker(),
+		ctx:         sessionCtx,
+		cancel:      cancel,
 	}
 }
 
@@ -109,7 +109,7 @@ func (s *Session) Start() {
 	go s.checkInputsLoop()
 }
 
-// Stop gracefully stops the session
+// Stop gracefully stops session
 func (s *Session) Stop() {
 	s.cancel()
 	s.mu.Lock()
@@ -128,7 +128,7 @@ func (s *Session) AddCharacter(playerID string, char *Character) {
 	log.Printf("[SESSION] Added character %s for player %s", char.Name, playerID)
 }
 
-// RemoveCharacter removes a character from the session
+// RemoveCharacter removes a character from session
 func (s *Session) RemoveCharacter(playerID string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -146,7 +146,7 @@ func (s *Session) GetCharacter(playerID string) (*Character, bool) {
 	return char, exists
 }
 
-// UpdateActivity updates the last activity timestamp
+// UpdateActivity updates last activity timestamp
 func (s *Session) UpdateActivity() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -174,13 +174,35 @@ func (s *Session) ProcessInput(input InputData) (*GameOutput, error) {
 	}
 
 	// Generate response from LLM
-	response, err := s.llmProvider.GenerateRequest(s.ctx, prompt, nil)
+	response, err := s.llmProvider.GenerateRequest(s.ctx, prompt, s.GetAllCharacterSheets())
 	if err != nil {
 		s.State = StateActive
 		return nil, fmt.Errorf("failed to generate response: %w", err)
 	}
 
 	s.State = StateActive
+
+	// Parse character updates from response
+	_, charUpdate, err := ParseCharacterUpdateFromResponse(response)
+	if err != nil {
+		log.Printf("[SESSION] Failed to parse character update: %v", err)
+		// Continue without applying updates if parsing fails
+	}
+
+	// Apply character updates if any
+	if charUpdate != nil {
+		for _, char := range s.Characters {
+			updatedSheet, warnings := ApplyCharacterUpdate(char.Sheet, *charUpdate)
+			for _, warning := range warnings {
+				log.Printf("[SESSION] Character update warning: %v", warning)
+			}
+
+			// Update in-memory character
+			char.Sheet = updatedSheet
+			char.LastUpdate = time.Now()
+			log.Printf("[SESSION] Updated character %s after response", char.Name)
+		}
+	}
 
 	return &GameOutput{
 		Source:    "gm",
@@ -277,9 +299,110 @@ func (s *Session) GetAllCharacterSheets() []string {
 	return sheets
 }
 
-// IsActive returns whether the session is active
+// IsActive returns whether session is active
 func (s *Session) IsActive() bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.State == StateActive
+}
+
+// GetAllCharacters returns all characters in session
+func (s *Session) GetAllCharacters() []*Character {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	chars := make([]*Character, 0, len(s.Characters))
+	for _, char := range s.Characters {
+		chars = append(chars, char)
+	}
+	return chars
+}
+
+// BuildGamePrompt constructs an LLM prompt from input and character sheets
+func (pb *PromptBuilder) BuildGamePrompt(input InputData, characterSheets []string) string {
+	var prompt strings.Builder
+
+	// Add system context
+	prompt.WriteString("--- СИСТЕМА: WARHAMMER FANTASY ROLEPLAY 4E ---\n\n")
+	prompt.WriteString("Ты - Game Master (Гейм Мастер) для игры в WFRP 4e. ")
+	prompt.WriteString("Твоя задача - вести интересную и атмосферную игру, ")
+	prompt.WriteString("строго соблюдая правила WFRP 4th Edition.\n\n")
+
+	// Add campaign context
+	if pb.campaign != "" {
+		prompt.WriteString(fmt.Sprintf("--- КАМПАНИЯ: %s ---\n\n", pb.campaign))
+	}
+
+	// Add scenario context
+	if pb.scenario != "" {
+		prompt.WriteString(fmt.Sprintf("СЦЕНАРИЙ:\n%s\n\n", pb.scenario))
+	}
+
+	// Add characters section
+	if len(characterSheets) > 0 {
+		prompt.WriteString("--- АКТИВНЫЕ ПЕРСОНАЖИ ИГРОКОВ ---\n\n")
+		for i, sheet := range characterSheets {
+			if i > 0 {
+				prompt.WriteString("\n---\n\n")
+			}
+			prompt.WriteString(sheet)
+		}
+		prompt.WriteString("\n--- КОНЕЦ ПЕРСОНАЖЕЙ ---\n\n")
+	}
+
+	// Add rules reference
+	if len(pb.rules) > 0 {
+		prompt.WriteString("--- ПРАВИЛА ---\n")
+		prompt.WriteString("Важно строго следовать правилам WFRP 4e. ")
+		prompt.WriteString("Для проверки механик используй:\n")
+		for _, rule := range pb.rules {
+			prompt.WriteString(fmt.Sprintf("  • %s\n", rule))
+		}
+		prompt.WriteString("--- КОНЕЦ ПРАВИЛ ---\n\n")
+	}
+
+	// Add input section
+	prompt.WriteString("--- ВВОД ИГРОКА ---\n")
+	prompt.WriteString(fmt.Sprintf("Источник: %s\n", input.Source))
+	prompt.WriteString(fmt.Sprintf("Содержание: %s\n", input.Content))
+	prompt.WriteString(fmt.Sprintf("Время: %s\n", input.Timestamp.Format("15:04:05")))
+
+	// Add metadata if present
+	if len(input.Metadata) > 0 {
+		prompt.WriteString("Метаданные:\n")
+		for key, value := range input.Metadata {
+			prompt.WriteString(fmt.Sprintf("  • %s: %v\n", key, value))
+		}
+	}
+
+	prompt.WriteString("--- КОНЕЦ ВВОДА ---\n\n")
+
+	// Add response instruction
+	prompt.WriteString("--- ИНСТРУКЦИЯ ---\n")
+	prompt.WriteString("Отвечай как Game Master. Веди игру атмосферно и интересно. ")
+	prompt.WriteString("При описании действий требуй проверок по правилам WFRP 4e. ")
+	prompt.WriteString("Если игрок пытается выполнить действие, требуй соответствующей проверки (Бой, Навык, Характеристика). ")
+	prompt.WriteString("Соблюдай все правила WFRP 4e, включая модификаторы, сложность и последствия провала/успеха.\n")
+	prompt.WriteString("--- КОНЕЦ ИНСТРУКЦИИ ---\n\n")
+
+	// Add separator for response
+	prompt.WriteString("GM RESPONSE:")
+
+	return prompt.String()
+}
+
+// SetScenario sets current scenario for prompt builder
+func (pb *PromptBuilder) SetScenario(scenario string) {
+	pb.scenario = scenario
+}
+
+// AddRule adds a rule reference to the prompt builder
+func (pb *PromptBuilder) AddRule(rule string) {
+	pb.rules = append(pb.rules, rule)
+}
+
+// SetCharacters sets characters for prompt builder
+func (pb *PromptBuilder) SetCharacters(chars []*Character) {
+	pb.characters = make([]*Character, len(chars))
+	copy(pb.characters, chars)
 }
