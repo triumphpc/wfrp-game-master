@@ -30,3 +30,11 @@ type Response struct {
 	Model   string
 	Tokens  int
 }
+
+// ProviderConfig holds configuration for LLM providers
+type ProviderConfig struct {
+	Name   string
+	APIKey string
+	BaseURL string
+	Model  string
+}
