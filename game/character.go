@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 )
 
 // CharacterManager handles character card operations
@@ -272,4 +273,302 @@ func ParseCharacterStats(sheet string) (*CharacterStats, error) {
 	}
 
 	return stats, nil
+}
+
+// CharacterUpdate represents changes to apply to a character
+type CharacterUpdate struct {
+	HPChange     int  // Damage or healing
+	MaxHPChange  int  // Permanent HP change
+	XPChange     int  // Experience gained
+	StatsChanges map[string]int // Statistic changes (WS, S, Ag, etc.)
+	SkillsAdded  []string
+	SkillsRemoved []string
+	Conditions   []string // Conditions added/removed
+}
+
+// ApplyCharacterUpdate applies changes to a character sheet according to WFRP rules
+func ApplyCharacterUpdate(sheet string, update CharacterUpdate) (string, []string) {
+	var warnings []string
+	updated := sheet
+
+	// Parse current stats for validation
+	stats, err := ParseCharacterStats(sheet)
+	if err != nil {
+		warnings = append(warnings, fmt.Sprintf("Failed to parse stats: %v", err))
+	}
+
+	// Apply HP changes
+	if update.HPChange != 0 {
+		updated = applyHPChange(updated, update.HPChange, stats)
+		if update.HPChange < 0 {
+			warnings = append(warnings, fmt.Sprintf("Character took %d damage", -update.HPChange))
+		} else {
+			warnings = append(warnings, fmt.Sprintf("Character healed %d HP", update.HPChange))
+		}
+	}
+
+	// Apply Max HP changes
+	if update.MaxHPChange != 0 {
+		updated = applyMaxHPChange(updated, update.MaxHPChange)
+	}
+
+	// Apply XP changes
+	if update.XPChange != 0 {
+		updated = applyXPChange(updated, update.XPChange)
+		warnings = append(warnings, fmt.Sprintf("Character gained %d XP", update.XPChange))
+	}
+
+	// Apply statistic changes
+	for stat, change := range update.StatsChanges {
+		updated = applyStatChange(updated, stat, change)
+		warnings = append(warnings, fmt.Sprintf("%s changed by %d", stat, change))
+	}
+
+	// Add skills
+	for _, skill := range update.SkillsAdded {
+		updated = addSkillToSheet(updated, skill)
+		warnings = append(warnings, fmt.Sprintf("Added skill: %s", skill))
+	}
+
+	// Add conditions
+	for _, cond := range update.Conditions {
+		updated = addConditionToSheet(updated, cond)
+		warnings = append(warnings, fmt.Sprintf("Condition added: %s", cond))
+	}
+
+	updated = fmt.Sprintf("%s\n\n*(Обновлено: %s)*", updated, time.Now().Format("15:04:05"))
+
+	return updated, warnings
+}
+
+// applyHPChange applies HP damage or healing
+func applyHPChange(sheet string, change int, stats *CharacterStats) string {
+	if stats == nil {
+		return sheet
+	}
+
+	// Find current HP line and update it
+	newCurrentHP := stats.CurrentHP + change
+	if newCurrentHP < 0 {
+		newCurrentHP = 0
+	} else if stats.MaxHP > 0 && newCurrentHP > stats.MaxHP {
+		newCurrentHP = stats.MaxHP
+	}
+
+	// Replace HP line in sheet
+	replacer := strings.NewReplacer(
+		fmt.Sprintf("HP: %d", stats.CurrentHP),
+		fmt.Sprintf("HP: %d", newCurrentHP),
+		fmt.Sprintf("Здоровье: %d", stats.CurrentHP),
+		fmt.Sprintf("Здоровье: %d", newCurrentHP),
+	)
+
+	return replacer.Replace(sheet)
+}
+
+// applyMaxHPChange applies permanent Max HP change
+func applyMaxHPChange(sheet string, change int) string {
+	// This is for permanent changes like from "Toughened" talent
+	// Find Max HP line and update it
+	return sheet // Placeholder - needs full markdown parsing
+}
+
+// applyXPChange applies experience change
+func applyXPChange(sheet string, change int) string {
+	// Parse current XP
+	var currentXP int
+	if idx := strings.Index(sheet, "XP:"); idx >= 0 {
+		if _, err := fmt.Sscanf(sheet[idx:], "XP: %d", &currentXP); err == nil {
+			newXP := currentXP + change
+			replacer := strings.NewReplacer(
+				fmt.Sprintf("XP: %d", currentXP),
+				fmt.Sprintf("XP: %d", newXP),
+			)
+			return replacer.Replace(sheet)
+		}
+	}
+	return sheet
+}
+
+// applyStatChange applies characteristic change
+func applyStatChange(sheet string, stat string, change int) string {
+	// Parse current stat value
+	var currentValue int
+	statMarker := fmt.Sprintf("%s:", stat)
+
+	if idx := strings.Index(sheet, statMarker); idx >= 0 {
+		if _, err := fmt.Sscanf(sheet[idx:], statMarker+" %d", &currentValue); err == nil {
+			newValue := currentValue + change
+			// WFRP stats max at 100 (without advances)
+			if newValue > 100 {
+				newValue = 100
+			}
+			if newValue < 0 {
+				newValue = 0
+			}
+			replacer := strings.NewReplacer(
+				fmt.Sprintf("%s %d", stat, currentValue),
+				fmt.Sprintf("%s %d", stat, newValue),
+			)
+			return replacer.Replace(sheet)
+		}
+	}
+	return sheet
+}
+
+// addSkillToSheet adds a new skill to the character sheet
+func addSkillToSheet(sheet string, skill string) string {
+	// Find the skills section and add the skill
+	skillsSection := "## Навыки"
+	if idx := strings.Index(sheet, skillsSection); idx >= 0 {
+		// Find end of section
+		endIdx := strings.Index(sheet[idx:], "##")
+		if endIdx == -1 {
+			endIdx = len(sheet[idx:])
+		}
+		insertPoint := idx + len(skillsSection)
+
+		// Insert skill with proper formatting
+		newSkill := fmt.Sprintf("\n- %s", skill)
+		return sheet[:insertPoint] + newSkill + sheet[insertPoint:]
+	}
+	return sheet
+}
+
+// addConditionToSheet adds a condition to the character sheet
+func addConditionToSheet(sheet string, condition string) string {
+	// Add to existing conditions or create new section
+	conditionsHeader := "## Состояния"
+	conditionsMarker := "### Психологические состояния"
+
+	var insertPoint int
+	var newCondition string
+
+	if idx := strings.Index(sheet, conditionsHeader); idx >= 0 {
+		// Add to existing section
+		if markerIdx := strings.Index(sheet, conditionsMarker); markerIdx > idx {
+			insertPoint = markerIdx
+			newCondition = fmt.Sprintf("\n- %s", condition)
+		} else {
+			// No marker, add after header
+			insertPoint = idx + len(conditionsHeader)
+			newCondition = fmt.Sprintf("\n\n%s\n- %s", conditionsMarker, condition)
+		}
+	} else {
+		// Create new conditions section
+		insertPoint = len(sheet)
+		newCondition = fmt.Sprintf("\n\n%s\n\n%s\n- %s", conditionsHeader, conditionsMarker, condition)
+	}
+
+	return sheet[:insertPoint] + newCondition + sheet[insertPoint:]
+}
+
+// ParseCharacterUpdateFromResponse parses LLM response for character updates
+func ParseCharacterUpdateFromResponse(response string) (playerID string, update *CharacterUpdate, err error) {
+	update = &CharacterUpdate{
+		StatsChanges: make(map[string]int),
+		SkillsAdded:  make([]string, 0),
+		Conditions:   make([]string, 0),
+	}
+
+	lines := strings.Split(response, "\n")
+
+	for _, line := range lines {
+		lower := strings.ToLower(strings.TrimSpace(line))
+
+		// Parse HP changes
+		if strings.Contains(lower, "получил") || strings.Contains(lower, "took damage") {
+			var damage int
+			if _, err := fmt.Sscanf(line, "%*[damage ]*%d", &damage); err == nil {
+				update.HPChange -= damage
+			}
+		}
+
+		// Parse healing
+		if strings.Contains(lower, "вылечен") || strings.Contains(lower, "healed") {
+			var healing int
+			if _, err := fmt.Sscanf(line, "%*[healed ]*%d", &healing); err == nil {
+				update.HPChange += healing
+			}
+		}
+
+		// Parse XP gain
+		if strings.Contains(lower, "получил опыт") || strings.Contains(lower, "gained xp") {
+			var xp int
+			if _, err := fmt.Sscanf(line, "%*[xp ]*%d", &xp); err == nil {
+				update.XPChange += xp
+			}
+		}
+
+		// Parse skill gains
+		if strings.Contains(lower, "навык") || strings.Contains(lower, "skill") {
+			// Extract skill name from line
+			skillName := extractSkillFromLine(line)
+			if skillName != "" {
+				update.SkillsAdded = append(update.SkillsAdded, skillName)
+			}
+		}
+
+		// Parse conditions
+		if strings.Contains(lower, "ранение") || strings.Contains(lower, "wound") {
+			update.Conditions = append(update.Conditions, "Wounded")
+		}
+		if strings.Contains(lower, "кровотечение") || strings.Contains(lower, "bleeding") {
+			update.Conditions = append(update.Conditions, "Bleeding")
+		}
+		if strings.Contains(lower, "крит") || strings.Contains(lower, "critical") {
+			update.Conditions = append(update.Conditions, "Critical Wound")
+		}
+	}
+
+	return "", update, nil
+}
+
+// extractSkillFromLine extracts skill name from a line
+func extractSkillFromLine(line string) string {
+	// Simple extraction - could be enhanced
+	parts := strings.Fields(line)
+	for _, part := range parts {
+		if strings.HasSuffix(part, ":") || strings.HasSuffix(part, "-") {
+			continue
+		}
+		if len(part) > 2 {
+			return strings.TrimSpace(part)
+		}
+	}
+	return ""
+}
+
+// ValidateUpdate checks if an update is valid per WFRP rules
+func ValidateUpdate(update CharacterUpdate, currentStats *CharacterStats) []string {
+	var errors []string
+
+	// Check HP bounds
+	if currentStats != nil {
+		newHP := currentStats.CurrentHP + update.HPChange
+		if newHP < 0 {
+			errors = append(errors, "HP cannot be negative")
+		}
+		if newHP > currentStats.MaxHP && update.MaxHPChange == 0 {
+			errors = append(errors, "HP cannot exceed Max HP without healing")
+		}
+	}
+
+	// Check XP
+	if update.XPChange < 0 {
+		errors = append(errors, "Cannot lose XP")
+	}
+
+	// Check stat bounds
+	for stat, change := range update.StatsChanges {
+		if change < 0 {
+			errors = append(errors, fmt.Sprintf("Cannot lose %s stat", stat))
+		}
+		// Stats normally max at 100 without advances
+		if change > 100 {
+			errors = append(errors, fmt.Sprintf("%s change exceeds WFRP limits", stat))
+		}
+	}
+
+	return errors
 }
