@@ -13,10 +13,10 @@ import (
 
 // CampaignManager manages WFRP campaigns
 type CampaignManager struct {
-	basePath     string
-	parser       *MarkdownParser
-	campaigns    map[string]*Campaign
-	mu            sync.RWMutex
+	basePath  string
+	parser    *MarkdownParser
+	campaigns map[string]*Campaign
+	mu        sync.RWMutex
 }
 
 // NewCampaignManager creates a new campaign manager
@@ -199,15 +199,20 @@ func (cm *CampaignManager) Refresh() error {
 			continue
 		}
 
-		// Load campaign metadata
 		campPath := filepath.Join(cm.basePath, campName)
+
+		fileInfo, err := entry.Info()
+		if err != nil {
+			return fmt.Errorf("failed to get file info for %s: %w", campName, err)
+		}
+
 		campInfo, err := cm.loadCampaignInfo(campPath)
 		if err != nil {
 			// Create basic info if metadata doesn't exist
 			campInfo = &Campaign{
 				Name:         campName,
 				Path:         campPath,
-				LastModified: info.ModTime(),
+				LastModified: fileInfo.ModTime(),
 			}
 		}
 
@@ -245,7 +250,7 @@ func (cm *CampaignManager) loadCampaignInfo(campPath string) (*Campaign, error) 
 		if strings.HasPrefix(trimmed, "#") {
 			info.Name = strings.TrimSpace(strings.TrimLeft(trimmed, "#"))
 		} else if strings.HasPrefix(trimmed, "Описание:") ||
-				 strings.HasPrefix(trimmed, "Description:") {
+			strings.HasPrefix(trimmed, "Description:") {
 			info.Description = strings.TrimSpace(strings.SplitAfter(trimmed, ":")[1])
 		}
 	}

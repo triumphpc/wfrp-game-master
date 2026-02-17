@@ -13,18 +13,18 @@ import (
 
 // Streamer handles sending long messages in chunks
 type Streamer struct {
-	bot         *Bot
-	maxLength    int
-	rateLimit    time.Duration
-	mu           sync.Mutex
-	queue        chan *streamJob
-	stopChan     chan struct{}
-	wg           sync.WaitGroup
+	bot       *Bot
+	maxLength int
+	rateLimit time.Duration
+	mu        sync.Mutex
+	queue     chan *streamJob
+	stopChan  chan struct{}
+	wg        sync.WaitGroup
 }
 
 // streamJob represents a streaming job
 type streamJob struct {
-	chatID  int64
+	chatID   int64
 	text     string
 	replyTo  *int
 	callback func(int, error)
@@ -33,8 +33,8 @@ type streamJob struct {
 // NewStreamer creates a new message streamer
 func NewStreamer(bot *Bot) *Streamer {
 	return &Streamer{
-		bot:      bot,
-		maxLength: 4096, // Telegram message limit
+		bot:       bot,
+		maxLength: 4096,                   // Telegram message limit
 		rateLimit: 100 * time.Millisecond, // 10 messages per second
 		queue:     make(chan *streamJob, 100),
 		stopChan:  make(chan struct{}),
@@ -58,7 +58,7 @@ func (s *Streamer) Stream(chatID int64, text string) error {
 	resultChan := make(chan error, 1)
 	job := &streamJob{
 		chatID: chatID,
-		text:    text,
+		text:   text,
 		callback: func(part int, err error) {
 			resultChan <- err
 		},
@@ -77,9 +77,9 @@ func (s *Streamer) Stream(chatID int64, text string) error {
 func (s *Streamer) StreamReply(messageID int, chatID int64, text string) error {
 	resultChan := make(chan error, 1)
 	job := &streamJob{
-		chatID: chatID,
+		chatID:  chatID,
 		text:    text,
-		replyTo:  &messageID,
+		replyTo: &messageID,
 		callback: func(part int, err error) {
 			resultChan <- err
 		},
@@ -170,7 +170,7 @@ func (s *Streamer) findBestSplitPoint(text string) int {
 	// Priority order: period, newline, space
 	splitPoints := []struct {
 		pos  int
-		char  rune
+		char rune
 	}{
 		{strings.LastIndex(text, "."), '.'},
 		{strings.LastIndex(text, "\n"), '\n'},

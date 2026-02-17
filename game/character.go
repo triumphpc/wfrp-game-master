@@ -14,15 +14,15 @@ import (
 // CharacterManager handles character card operations
 type CharacterManager struct {
 	campaignPath string
-	characters  map[string]*Character
-	mu          sync.RWMutex
+	characters   map[string]*Character
+	mu           sync.RWMutex
 }
 
 // NewCharacterManager creates a new character manager
 func NewCharacterManager(campaignPath string) *CharacterManager {
 	return &CharacterManager{
 		campaignPath: campaignPath,
-		characters:  make(map[string]*Character),
+		characters:   make(map[string]*Character),
 	}
 }
 
@@ -45,7 +45,7 @@ func (cm *CharacterManager) LoadCharacter(playerID, characterPath string) (*Char
 	// Parse character card
 	char := &Character{
 		ID:         playerID,
-		Name:       extractCharacterName(content),
+		Name:       extractCharacterName(string(content)),
 		CardPath:   fullPath,
 		Sheet:      string(content),
 		LastUpdate: time.Now(),
@@ -202,24 +202,24 @@ func extractCharacterName(content string) string {
 
 // CharacterStats represents parsed character statistics
 type CharacterStats struct {
-	Name        string
-	WS          int // Weapon Skill
-	BS          int // Ballistic Skill
-	S            int // Strength
-	Ag          int // Agility
-	Int         int // Intelligence
-	WP          int // Will Power
-	Fel         int // Fellowship
-	CurrentHP    int
-	MaxHP        int
-	XP           int
-	Experience   []string
+	Name       string
+	WS         int // Weapon Skill
+	BS         int // Ballistic Skill
+	S          int // Strength
+	Ag         int // Agility
+	Int        int // Intelligence
+	WP         int // Will Power
+	Fel        int // Fellowship
+	CurrentHP  int
+	MaxHP      int
+	XP         int
+	Experience []string
 }
 
 // ParseCharacterStats parses character statistics from markdown
 func ParseCharacterStats(sheet string) (*CharacterStats, error) {
 	stats := &CharacterStats{
-		Name:     extractCharacterName(sheet),
+		Name:      extractCharacterName(sheet),
 		CurrentHP: 0,
 		MaxHP:     0,
 		XP:        0,
@@ -277,13 +277,13 @@ func ParseCharacterStats(sheet string) (*CharacterStats, error) {
 
 // CharacterUpdate represents changes to apply to a character
 type CharacterUpdate struct {
-	HPChange     int  // Damage or healing
-	MaxHPChange  int  // Permanent HP change
-	XPChange     int  // Experience gained
-	StatsChanges map[string]int // Statistic changes (WS, S, Ag, etc.)
-	SkillsAdded  []string
+	HPChange      int            // Damage or healing
+	MaxHPChange   int            // Permanent HP change
+	XPChange      int            // Experience gained
+	StatsChanges  map[string]int // Statistic changes (WS, S, Ag, etc.)
+	SkillsAdded   []string
 	SkillsRemoved []string
-	Conditions   []string // Conditions added/removed
+	Conditions    []string // Conditions added/removed
 }
 
 // ApplyCharacterUpdate applies changes to a character sheet according to WFRP rules

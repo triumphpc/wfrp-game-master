@@ -75,9 +75,9 @@ func (rc *RuleChecker) SearchRules(query string) []RuleMatch {
 	for _, pattern := range patterns {
 		if strings.Contains(queryLower, pattern.keyword) {
 			results = append(results, RuleMatch{
-				Rule:     pattern.rule,
+				Rule:       pattern.rule,
 				Confidence: 0.7, // Default confidence
-				Source:    "pattern-match",
+				Source:     "pattern-match",
 			})
 		}
 	}
@@ -118,9 +118,7 @@ func (rc *RuleChecker) checkSkillRules(content string, input InputData) bool {
 	for _, keyword := range skillKeywords {
 		if strings.Contains(content, keyword) {
 			// Check if a characteristic is mentioned
-			hasChar := strings.ContainsAny(content,
-				"В", "С", "Лов", "Инт", "ВН", "Об",
-				"WS", "BS", "S", "Ag", "Int", "WP", "Fel")
+			hasChar := strings.ContainsAny(content, "ВСЛовИнтВНОбWSBSSAgIntWPFel")
 
 			return !hasChar
 		}
@@ -143,33 +141,39 @@ func (rc *RuleChecker) findRulePattern(query string) string {
 }
 
 // getRulePatterns returns known rule patterns
-func (rc *RuleChecker) getRulePatterns() []rulePattern {
-	return []rulePattern{
+func (rc *RuleChecker) getRulePatterns() []struct {
+	keyword string
+	rule    string
+} {
+	return []struct {
+		keyword string
+		rule    string
+	}{
 		// Combat rules
-		{"keyword": "инициатива", "rule": "Initiative is rolled at start of combat using Agility (Ag)"},
-		{"keyword": "атака", "rule": "Combat uses Weapon Skill (WS) against opponent's Parry (Ag)"},
-		{"keyword": "урон", "rule": "Damage is calculated from weapon damage minus enemy Toughness/Armor"},
+		{keyword: "инициатива", rule: "Initiative is rolled at start of combat using Agility (Ag)"},
+		{keyword: "атака", rule: "Combat uses Weapon Skill (WS) against opponent's Parry (Ag)"},
+		{keyword: "урон", rule: "Damage is calculated from weapon damage minus enemy Toughness/Armor"},
 
 		// Skill checks
-		{"keyword": "проверка навыка", "rule": "Skill checks use d100 + characteristic value vs difficulty"},
-		{"keyword": "провал проверки", "rule": "Failed check: result is higher than characteristic + skill"},
+		{keyword: "проверка навыка", rule: "Skill checks use d100 + characteristic value vs difficulty"},
+		{keyword: "провал проверки", rule: "Failed check: result is higher than characteristic + skill"},
 
 		// Character development
-		{"keyword": "опыт", "rule": "Experience (XP) is spent to advance characteristics and skills"},
-		{"keyword": "карьера", "rule": "Career advancement follows the scheme in КАРЬЕРЫ.md"},
+		{keyword: "опыт", rule: "Experience (XP) is spent to advance characteristics and skills"},
+		{keyword: "карьера", rule: "Career advancement follows the scheme in КАРЬЕРЫ.md"},
 
 		// Conditions
-		{"keyword": "ранение", "rule": "Wounds reduce HP and may cause critical effects"},
-		{"keyword": "шок", "rule": "Critical wounds cause Bleeding, Broken, etc."},
+		{keyword: "ранение", rule: "Wounds reduce HP and may cause critical effects"},
+		{keyword: "шок", rule: "Critical wounds cause Bleeding, Broken, etc."},
 
 		// Movement
-		{"keyword": "движение", "rule": "Movement rate (M) is derived from Agility (Ag)"},
+		{keyword: "движение", rule: "Movement rate (M) is derived from Agility (Ag)"},
 	}
 }
 
 // RuleMatch represents a search result from rule lookup
 type RuleMatch struct {
-	Rule      string
+	Rule       string
 	Confidence float64
 	Source     string
 }
@@ -229,12 +233,6 @@ func containsString(slice []string, item string) bool {
 		}
 	}
 	return false
-}
-
-// rulePattern represents a keyword to rule mapping
-type rulePattern struct {
-	keyword string
-	rule    string
 }
 
 // stringsContainsAny checks if any of the substrings are in the main string

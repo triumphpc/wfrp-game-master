@@ -3,7 +3,6 @@ package llm
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 
@@ -40,9 +39,9 @@ func (p *OpenAIProvider) GenerateRequest(ctx context.Context, prompt string, cha
 
 	req := openai.ChatCompletionRequest{
 		Model:       p.config.Model,
-		Messages:     []openai.ChatCompletionMessage{{Role: "user", Content: fullPrompt}},
-		MaxTokens:    4096,
-		Temperature:  0.7,
+		Messages:    []openai.ChatCompletionMessage{{Role: "user", Content: fullPrompt}},
+		MaxTokens:   4096,
+		Temperature: 0.7,
 	}
 
 	resp, err := p.client.CreateChatCompletion(ctx, req)
@@ -68,9 +67,9 @@ func (p *OpenAIProvider) StreamRequest(ctx context.Context, prompt string, chara
 
 		req := openai.ChatCompletionRequest{
 			Model:       p.config.Model,
-			Messages:     []openai.ChatCompletionMessage{{Role: "user", Content: fullPrompt}},
-			MaxTokens:    4096,
-			Temperature:  0.7,
+			Messages:    []openai.ChatCompletionMessage{{Role: "user", Content: fullPrompt}},
+			MaxTokens:   4096,
+			Temperature: 0.7,
 			Stream:      true,
 		}
 
@@ -122,37 +121,19 @@ func (p *OpenAIProvider) buildPrompt(prompt string, characterCards []string) str
 	return contextStr + prompt
 }
 
-// ConfigJSON represents OpenAI API configuration for JSON parsing
-type ConfigJSON struct {
-	APIKey  string `json:"api_key"`
-	BaseURL string `json:"base_url"`
-	Model   string `json:"model"`
-}
-
-// FromJSON creates ProviderConfig from JSON configuration
-func (c *ConfigJSON) FromJSON(data []byte) (*ProviderConfig, error) {
-	var cfg ConfigJSON
-	if err := json.Unmarshal(data, &cfg); err != nil {
-		return nil, fmt.Errorf("failed to parse OpenAI config: %w", err)
+// LoadProviderFromJSON creates a provider from JSON configuration
+func LoadProviderFromJSON(data []byte) (*ProviderConfig, LLMProvider, error) {
+	cfg, err := (&ConfigJSON{}).FromJSON(data)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	pc := &ProviderConfig{
-		Name:   "openai",
-		APIKey: cfg.APIKey,
-		Model:   cfg.Model,
+	provider, err := NewProviderFromConfig(cfg)
+	if err != nil {
+		return cfg, nil, err
 	}
 
-	if cfg.BaseURL != "" {
-		pc.BaseURL = cfg.BaseURL
-	} else {
-		pc.BaseURL = "https://api.openai.com/v1"
-	}
-
-	if pc.Model == "" {
-		pc.Model = "gpt-4o"
-	}
-
-	return pc, nil
+	return cfg, provider, nil
 }
 
 // NewProviderFromConfig creates an LLMProvider from ProviderConfig

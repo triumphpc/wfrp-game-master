@@ -57,14 +57,13 @@ func (mp *MarkdownParser) ParseCharacterSheet(content string) (*ParsedCharacter,
 
 	// Parse using regex patterns
 	lines := strings.Split(content, "\n")
-	currentSection := ""
 
 	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
 
 		// Detect sections
 		if strings.HasPrefix(trimmed, "#") {
-			currentSection = strings.TrimSpace(strings.TrimLeft(trimmed, "#"))
+			_ = strings.TrimSpace(strings.TrimLeft(trimmed, "#"))
 			continue
 		}
 
@@ -132,10 +131,10 @@ type ParsedCharacter struct {
 
 // SessionLog represents a parsed session log
 type SessionLog struct {
-	Date      string
-	Title     string
-	Summary   string
-	Entries   []LogEntry
+	Date       string
+	Title      string
+	Summary    string
+	Entries    []LogEntry
 	Characters []string
 }
 
@@ -150,11 +149,11 @@ type LogEntry struct {
 
 // DiceRoll represents a dice roll result
 type DiceRoll struct {
-	Type     string // "d100", "d10", "2d10"
+	Type           string // "d100", "d10", "2d10"
 	Characteristic string
-	Skill     string
-	Result    int
-	Modifier  int
+	Skill          string
+	Result         int
+	Modifier       int
 }
 
 // parseSessionMetadata extracts metadata from log lines
@@ -200,8 +199,8 @@ func (mp *MarkdownParser) parseLogEntry(line string) *LogEntry {
 	dicePattern := regexp.MustCompile(`d(\d+)|(\d+)d(\d+)`)
 	if diceMatches := dicePattern.FindAllString(line, -1); len(diceMatches) > 0 {
 		entry.Roll = &DiceRoll{
-			Type:    diceMatches[0],
-			Result:   mp.extractRollResult(line),
+			Type:   diceMatches[0],
+			Result: mp.extractRollResult(line),
 		}
 	}
 

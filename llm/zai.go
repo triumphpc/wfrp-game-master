@@ -3,7 +3,6 @@ package llm
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 
@@ -38,9 +37,9 @@ func (p *ZAIProvider) GenerateRequest(ctx context.Context, prompt string, charac
 
 	req := openai.ChatCompletionRequest{
 		Model:       p.config.Model,
-		Messages:     []openai.ChatCompletionMessage{{Role: "user", Content: fullPrompt}},
-		MaxTokens:    4096,
-		Temperature:  0.7,
+		Messages:    []openai.ChatCompletionMessage{{Role: "user", Content: fullPrompt}},
+		MaxTokens:   4096,
+		Temperature: 0.7,
 	}
 
 	resp, err := p.client.CreateChatCompletion(ctx, req)
@@ -66,9 +65,9 @@ func (p *ZAIProvider) StreamRequest(ctx context.Context, prompt string, characte
 
 		req := openai.ChatCompletionRequest{
 			Model:       p.config.Model,
-			Messages:     []openai.ChatCompletionMessage{{Role: "user", Content: fullPrompt}},
-			MaxTokens:    4096,
-			Temperature:  0.7,
+			Messages:    []openai.ChatCompletionMessage{{Role: "user", Content: fullPrompt}},
+			MaxTokens:   4096,
+			Temperature: 0.7,
 			Stream:      true,
 		}
 
@@ -128,10 +127,10 @@ func parseZAIConfig(rawConfig map[string]interface{}) (*ProviderConfig, error) {
 	}
 
 	cfg := &ProviderConfig{
-		Name:   "z.ai",
-		APIKey: apiKey,
+		Name:    "z.ai",
+		APIKey:  apiKey,
 		BaseURL: "https://api.z.ai/v1",
-		Model:  "claude-3-5-sonnet-20240228",
+		Model:   "claude-3-5-sonnet-20240228",
 	}
 
 	if model, ok := rawConfig["model"].(string); ok && model != "" {
@@ -139,25 +138,4 @@ func parseZAIConfig(rawConfig map[string]interface{}) (*ProviderConfig, error) {
 	}
 
 	return cfg, nil
-}
-
-// ConfigJSON represents z.ai API configuration for JSON parsing
-type ConfigJSON struct {
-	APIKey string `json:"api_key"`
-	Model  string `json:"model"`
-}
-
-// FromJSON creates ProviderConfig from JSON configuration
-func (c *ConfigJSON) FromJSON(data []byte) (*ProviderConfig, error) {
-	var cfg ConfigJSON
-	if err := json.Unmarshal(data, &cfg); err != nil {
-		return nil, fmt.Errorf("failed to parse z.ai config: %w", err)
-	}
-
-	return &ProviderConfig{
-		Name:   "z.ai",
-		APIKey: cfg.APIKey,
-		BaseURL: "https://api.z.ai/v1",
-		Model:  cfg.Model,
-	}, nil
 }

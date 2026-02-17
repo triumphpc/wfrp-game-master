@@ -20,7 +20,9 @@
       "Bash(go mod tidy:*)",
       "Bash(git add:*)",
       "Bash(git restore:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(xxd:*)",
+      "Bash(go get:*)"
     ]
   }
 }

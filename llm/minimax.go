@@ -2,6 +2,7 @@
 package llm
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -39,7 +40,7 @@ func (p *MinimaxProvider) GenerateRequest(ctx context.Context, prompt string, ch
 	fullPrompt := p.buildPrompt(prompt, characterCards)
 
 	reqBody := minimaxRequest{
-		Model: p.config.Model,
+		Model:    p.config.Model,
 		Messages: []message{{Role: "user", Content: fullPrompt}},
 	}
 
@@ -48,7 +49,7 @@ func (p *MinimaxProvider) GenerateRequest(ctx context.Context, prompt string, ch
 		return "", fmt.Errorf("failed to marshal minimax request: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", p.apiURL, jsonData)
+	req, err := http.NewRequestWithContext(ctx, "POST", p.apiURL, bytes.NewReader(jsonData))
 	if err != nil {
 		return "", fmt.Errorf("failed to create minimax request: %w", err)
 	}
@@ -89,9 +90,9 @@ func (p *MinimaxProvider) StreamRequest(ctx context.Context, prompt string, char
 		fullPrompt := p.buildPrompt(prompt, characterCards)
 
 		reqBody := minimaxRequest{
-			Model:     p.config.Model,
-			Messages:   []message{{Role: "user", Content: fullPrompt}},
-			Stream:     true,
+			Model:    p.config.Model,
+			Messages: []message{{Role: "user", Content: fullPrompt}},
+			Stream:   true,
 		}
 
 		jsonData, err := json.Marshal(reqBody)
@@ -100,7 +101,7 @@ func (p *MinimaxProvider) StreamRequest(ctx context.Context, prompt string, char
 			return
 		}
 
-		req, err := http.NewRequestWithContext(ctx, "POST", p.apiURL, jsonData)
+		req, err := http.NewRequestWithContext(ctx, "POST", p.apiURL, bytes.NewReader(jsonData))
 		if err != nil {
 			ch <- fmt.Sprintf("Error: failed to create minimax request: %v", err)
 			return
@@ -165,8 +166,8 @@ func (p *MinimaxProvider) buildPrompt(prompt string, characterCards []string) st
 // minimaxRequest represents the request payload for minimax API
 type minimaxRequest struct {
 	Model    string    `json:"model"`
-	Messages  []message `json:"messages"`
-	Stream    bool      `json:"stream,omitempty"`
+	Messages []message `json:"messages"`
+	Stream   bool      `json:"stream,omitempty"`
 }
 
 // message represents a chat message
@@ -198,19 +199,4 @@ type streamChoice struct {
 // delta represents content in response
 type delta struct {
 	Content string `json:"content"`
-}
-
-// FromJSON creates ProviderConfig from JSON configuration
-func (c *ConfigJSON) FromJSON(data []byte) (*ProviderConfig, error) {
-	var cfg ConfigJSON
-	if err := json.Unmarshal(data, &cfg); err != nil {
-		return nil, fmt.Errorf("failed to parse minimax config: %w", err)
-	}
-
-	return &ProviderConfig{
-		Name:   "minimax",
-		APIKey: cfg.APIKey,
-		BaseURL: "https://api.minimax.chat/v1",
-		Model:  cfg.Model,
-	}, nil
 }

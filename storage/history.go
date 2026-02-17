@@ -8,35 +8,36 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 )
 
 // HistoryManager manages session history storage
 type HistoryManager struct {
-	basePath  string
-	parser    *MarkdownParser
-	sessions   map[string]*SessionRecord
-	mu         sync.RWMutex
+	basePath string
+	parser   *MarkdownParser
+	sessions map[string]*SessionRecord
+	mu       sync.RWMutex
 }
 
 // NewHistoryManager creates a new history manager
 func NewHistoryManager(basePath string) *HistoryManager {
 	return &HistoryManager{
 		basePath: basePath,
-		parser:    NewMarkdownParser(basePath),
-		sessions:   make(map[string]*SessionRecord),
+		parser:   NewMarkdownParser(basePath),
+		sessions: make(map[string]*SessionRecord),
 	}
 }
 
 // SessionRecord represents a saved session
 type SessionRecord struct {
-	ID          string
-	Date        time.Time
-	Title       string
+	ID         string
+	Date       time.Time
+	Title      string
 	Summary    string
-	Campaign    string
-	Characters  []string
-	Path        string
+	Campaign   string
+	Characters []string
+	Path       string
 }
 
 // CreateSession creates a new session record
@@ -210,7 +211,7 @@ func (hm *HistoryManager) resolveSessionPath(sessionID string) (string, error) {
 		}
 
 		if strings.HasPrefix(entry.Name(), sessionID) && strings.HasSuffix(entry.Name(), ".md") {
-			return filepath.Join(hm.basePath, entry.Name())
+			return filepath.Join(hm.basePath, entry.Name()), nil
 		}
 	}
 
@@ -373,7 +374,7 @@ func (hm *HistoryManager) IndexSessions() error {
 
 		path := filepath.Join(hm.basePath, entry.Name())
 		session := &SessionRecord{
-			ID:  sessionID,
+			ID:   sessionID,
 			Path: path,
 		}
 
@@ -423,7 +424,7 @@ type SessionFilter struct {
 	EndDate    *time.Time
 	MinDate    *time.Time
 	MaxDate    *time.Time
-	Characters  []string
+	Characters []string
 }
 
 // FilterSessions applies filters to session list

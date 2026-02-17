@@ -29,38 +29,38 @@ func NewContextLoader(basePath string) *ContextLoader {
 
 // GameContext represents the full context for a game session
 type GameContext struct {
-	Campaign     string
-	Scenario     string
-	Characters   []*CharacterSheet
-	Rules        []RuleReference
-	History      []SessionEntry
-	World        string
+	Campaign   string
+	Scenario   string
+	Characters []*CharacterSheet
+	Rules      []RuleReference
+	History    []SessionEntry
+	World      string
 }
 
 // CharacterSheet represents a loaded character sheet
 type CharacterSheet struct {
-	PlayerID  string
-	Name      string
-	Sheet     string
-	Stats     *CharacterStats
+	PlayerID   string
+	Name       string
+	Sheet      string
+	Stats      *CharacterStats
 	Inventory  []Item
 	Conditions []Condition
 }
 
 // RuleReference represents a reference to a game rule
 type RuleReference struct {
-	ID       string
-	Title    string
-	Location string
+	ID        string
+	Title     string
+	Location  string
 	Relevance string // "high", "medium", "low"
 }
 
 // SessionEntry represents a historical session entry
 type SessionEntry struct {
-	Date     string
-	Title    string
-	Summary  string
-	Changes  map[string]interface{}
+	Date    string
+	Title   string
+	Summary string
+	Changes map[string]interface{}
 }
 
 // Item represents an inventory item
@@ -73,18 +73,18 @@ type Item struct {
 
 // Condition represents a character condition
 type Condition struct {
-	Name        string
-	Severity    string // "minor", "serious", "critical"
-	Source      string
+	Name     string
+	Severity string // "minor", "serious", "critical"
+	Source   string
 }
 
 // LoadGameContext loads complete context for a session
 func (cl *ContextLoader) LoadGameContext(campaign string) (*GameContext, error) {
 	ctx := &GameContext{
-		Campaign:  campaign,
+		Campaign:   campaign,
 		Characters: make([]*CharacterSheet, 0),
-		Rules:     make([]RuleReference, 0),
-		History:   make([]SessionEntry, 0),
+		Rules:      make([]RuleReference, 0),
+		History:    make([]SessionEntry, 0),
 	}
 
 	// Load campaign characters
@@ -225,9 +225,9 @@ func (cl *ContextLoader) loadRules(ctx *GameContext) {
 		}
 
 		ctx.Rules = append(ctx.Rules, RuleReference{
-			ID:       filepath.Join("rules", ruleFile),
-			Title:    strings.TrimSuffix(filepath.Base(ruleFile), ".md"),
-			Location: rulePath,
+			ID:        filepath.Join("rules", ruleFile),
+			Title:     strings.TrimSuffix(filepath.Base(ruleFile), ".md"),
+			Location:  rulePath,
 			Relevance: "medium",
 		})
 	}
@@ -262,8 +262,8 @@ func extractSessionSummary(content string) string {
 	lines := strings.Split(content, "\n")
 	for _, line := range lines {
 		if strings.HasPrefix(line, "## Summary") ||
-		   strings.HasPrefix(line, "## Сводка") ||
-		   strings.HasPrefix(line, "## Итог") {
+			strings.HasPrefix(line, "## Сводка") ||
+			strings.HasPrefix(line, "## Итог") {
 			// Extract summary content
 			summaryLines := make([]string, 0)
 			for i := 1; i < len(lines); i++ {
@@ -383,9 +383,9 @@ func (cl *ContextLoader) GetRules() []RuleReference {
 
 		fullPath := filepath.Join(dictPath, entry.Name())
 		rules = append(rules, RuleReference{
-			ID:       filepath.Join("rules/dict", entry.Name()),
-			Title:    strings.TrimSuffix(entry.Name(), ".md"),
-			Location: fullPath,
+			ID:        filepath.Join("rules/dict", entry.Name()),
+			Title:     strings.TrimSuffix(entry.Name(), ".md"),
+			Location:  fullPath,
 			Relevance: "low",
 		})
 	}
