@@ -2,11 +2,14 @@
 package telegram
 
 import (
+	"fmt"
 	"log"
+	"strings"
 	"sync"
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"wfrp-bot/game"
 )
 
 // CommandHandler handles bot commands
@@ -17,14 +20,22 @@ type Middleware func(update *tgbotapi.Update) (bool, error)
 
 // Bot represents a Telegram bot instance
 type Bot struct {
-	api            *tgbotapi.BotAPI
-	handlers       map[string]CommandHandler
-	middleware     []Middleware
-	updates        <-chan tgbotapi.Update
-	stopChan       chan struct{}
-	wg             sync.WaitGroup
-	mu             sync.RWMutex
-	sessionManager *SessionManager
+	api             *tgbotapi.BotAPI
+	handlers        map[string]CommandHandler
+	middleware      []Middleware
+	updates         <-chan tgbotapi.Update
+	stopChan        chan struct{}
+	wg              sync.WaitGroup
+	mu              sync.RWMutex
+	sessionManager  *game.SessionManager
+	commandHandlers interface{} // Reference to CommandHandlers for character creation
+}
+
+// SetCommandHandlers sets reference to command handlers for character creation
+func (b *Bot) SetCommandHandlers(h interface{}) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	b.commandHandlers = h
 }
 
 // NewBot creates a new Telegram bot instance
@@ -35,10 +46,10 @@ func NewBot(token string) (*Bot, error) {
 	}
 
 	bot := &Bot{
-		api:      api,
-		handlers: make(map[string]CommandHandler),
+		api:        api,
+		handlers:   make(map[string]CommandHandler),
 		middleware: make([]Middleware, 0),
-		stopChan: make(chan struct{}),
+		stopChan:   make(chan struct{}),
 	}
 
 	log.Printf("Telegram bot authorized as @%s", api.Self.UserName)
@@ -61,15 +72,19 @@ func (b *Bot) AddMiddleware(mw Middleware) {
 	b.middleware = append(b.middleware, mw)
 }
 
+// SetSessionManager sets the session manager for handling player messages
+func (b *Bot) SetSessionManager(sm *game.SessionManager) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	b.sessionManager = sm
+}
+
 // Start begins receiving updates
 func (b *Bot) Start(pollingTimeout time.Duration) error {
-	u := tgbotapi.NewUpdate(0, 0)
-	u.Timeout = pollingTimeout
+	u := tgbotapi.NewUpdate(0)
+	u.Timeout = int(pollingTimeout)
 
-	updates, err := b.api.GetUpdatesChan(u)
-	if err != nil {
-		return err
-	}
+	updates := b.api.GetUpdatesChan(u)
 
 	b.updates = updates
 	log.Println("Bot started polling for updates")
@@ -88,22 +103,6 @@ func (b *Bot) Stop() {
 }
 
 // processUpdates processes incoming updates
-func (b *Bot) processUpdates() {
-	defer b.wg.Done()
-
-	for {
-		select {
-		case <-b.stopChan:
-			return
-		case update, ok := <-b.updates:
-			if !ok {
-				return
-			}
-			b.handleUpdate(update)
-		}
-}
-
-// HandleUpdate processes all incoming updates (commands and messages)
 func (b *Bot) HandleUpdate(update *tgbotapi.Update) error {
 	// Run middleware chain
 	for _, mw := range b.middleware {
@@ -138,7 +137,7 @@ func (b *Bot) HandleUpdate(update *tgbotapi.Update) error {
 // handleCommand processes a command
 func (b *Bot) handleCommand(update *tgbotapi.Update) error {
 	command := update.Message.Command()
-	args := update.Message.CommandArguments()
+	args := strings.Fields(update.Message.CommandArguments())
 
 	b.mu.RLock()
 	handler, exists := b.handlers[command]
@@ -162,7 +161,14 @@ func (b *Bot) handlePlayerMessage(update *tgbotapi.Update) error {
 	userID := fmt.Sprintf("%d", update.Message.From.ID)
 	text := update.Message.Text
 
-	log.Printf("[MSG] Player %d: %s", userID, text)
+	log.Printf("[MSG] Player %s: %s", userID, text)
+
+	// Check if there's an active character creation
+	if ch, ok := b.commandHandlers.(*CommandHandlers); ok {
+		if _, exists := ch.characterCreators[chatID]; exists {
+			return ch.ProcessCharacterCreation(chatID, text)
+		}
+	}
 
 	if b.sessionManager == nil {
 		return b.SendMessage(chatID, "Сессия не инициализирована. Используйте /start для начала игры.")
@@ -245,4 +251,23 @@ func truncateText(text string, maxLen int) string {
 		return text
 	}
 	return text[:maxLen] + "..."
+}
+
+// HandleUpdate processes all incoming updates (commands and messages)
+
+// processUpdates processes incoming updates
+func (b *Bot) processUpdates() {
+	defer b.wg.Done()
+
+	for {
+		select {
+		case <-b.stopChan:
+			return
+		case update, ok := <-b.updates:
+			if !ok {
+				return
+			}
+			b.HandleUpdate(&update)
+		}
+	}
 }

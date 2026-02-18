@@ -25,7 +25,6 @@ type Session struct {
 	mu            sync.RWMutex
 	llmProvider   llm.LLMProvider
 	promptBuilder *PromptBuilder
-	ruleChecker   *RuleChecker
 	ctx           context.Context
 	cancel        context.CancelFunc
 }
@@ -89,9 +88,8 @@ func NewSession(ctx context.Context, groupID int64, campaign string, provider ll
 		promptBuilder: &PromptBuilder{
 			campaign: campaign,
 		},
-		ruleChecker: NewRuleChecker(),
-		ctx:         sessionCtx,
-		cancel:      cancel,
+		ctx:    sessionCtx,
+		cancel: cancel,
 	}
 }
 
@@ -164,16 +162,7 @@ func (s *Session) ProcessInput(input InputData) (*GameOutput, error) {
 
 	// Build prompt with context
 	prompt := s.promptBuilder.BuildGamePrompt(input, s.GetAllCharacterSheets())
-
 	// Check rules if needed
-	if ruleViolations, err := s.ruleChecker.Check(input); err != nil {
-		log.Printf("[SESSION] Rule check error: %v", err)
-	} else if len(ruleViolations) > 0 {
-		log.Printf("[SESSION] Rule violations: %v", ruleViolations)
-		// Could add warnings to prompt
-	}
-
-	// Generate response from LLM
 	response, err := s.llmProvider.GenerateRequest(s.ctx, prompt, s.GetAllCharacterSheets())
 	if err != nil {
 		s.State = StateActive
@@ -316,6 +305,13 @@ func (s *Session) GetAllCharacters() []*Character {
 		chars = append(chars, char)
 	}
 	return chars
+}
+
+// GetLLMProvider returns the LLM provider for the session
+func (s *Session) GetLLMProvider() llm.LLMProvider {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.llmProvider
 }
 
 // BuildGamePrompt constructs an LLM prompt from input and character sheets

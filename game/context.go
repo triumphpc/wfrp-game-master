@@ -14,7 +14,6 @@ type ContextLoader struct {
 	rulesPath    string
 	campaignPath string
 	historyPath  string
-	ruleChecker  *RuleChecker
 }
 
 // NewContextLoader creates a new context loader
@@ -22,8 +21,6 @@ func NewContextLoader(basePath string) *ContextLoader {
 	return &ContextLoader{
 		rulesPath:    filepath.Join(basePath, "rules"),
 		campaignPath: basePath,
-		historyPath:  basePath,
-		ruleChecker:  NewRuleChecker(),
 	}
 }
 
@@ -355,7 +352,6 @@ func (cl *ContextLoader) SearchRules(query string) []RuleReference {
 	for _, rule := range cl.GetRules() {
 		ruleTitle := strings.ToLower(rule.Title)
 
-		// Simple matching - can be enhanced with RAG
 		if strings.Contains(ruleTitle, queryLower) {
 			results = append(results, rule)
 		}

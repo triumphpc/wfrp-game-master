@@ -2,6 +2,7 @@
 package telegram
 
 import (
+	"fmt"
 	"log"
 	"sync"
 	"time"
@@ -92,7 +93,20 @@ func GroupOnlyMiddleware(allowedGroupID string) Middleware {
 		}
 
 		// Convert string to int64 if needed
-		// For now, accept all chats for testing
+		// Parse group ID
+		var allowedGroup int64
+		_, err := fmt.Sscanf(allowedGroupID, "%d", &allowedGroup)
+		if err != nil {
+			log.Printf("Invalid group ID format: %s", allowedGroupID)
+			return false, fmt.Errorf("invalid group ID")
+		}
+
+		// Check if message is from the allowed group
+		if chatID != allowedGroup {
+			log.Printf("Message from unauthorized chat %d, allowed: %d", chatID, allowedGroup)
+			return false, nil
+		}
+
 		return true, nil
 	}
 }

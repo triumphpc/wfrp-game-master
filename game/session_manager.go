@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"time"
 )
 
 // SessionManager manages multiple game sessions
@@ -73,7 +74,7 @@ func (sm *SessionManager) ProcessPlayerMessage(chatID int64, playerID string, te
 	input := InputData{
 		Source:    "player",
 		Content:   text,
-		Timestamp: session.LastActivity,
+		Timestamp: time.Now(),
 		Metadata: map[string]interface{}{
 			"player_id": playerID,
 		},

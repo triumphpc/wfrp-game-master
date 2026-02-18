@@ -81,11 +81,13 @@ func LoadConfig() (BotConfig, error) {
 
 	// minimax provider
 	if apiKey := getEnv("MINIMAX_API_KEY", ""); apiKey != "" {
+		baseURL := getEnv("MINIMAX_BASE_URL", "https://api.minimax.io/v1")
+		model := getEnv("MINIMAX_MODEL", "MiniMax-M2.5")
 		providers["minimax"] = ProviderConfig{
 			Name:    "minimax",
 			APIKey:  apiKey,
-			BaseURL: "https://api.minimax.chat/v1",
-			Model:   "minimax-text",
+			BaseURL: baseURL,
+			Model:   model,
 		}
 	}
 

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 )
 
 // MinimaxProvider implements LLMProvider for minimax
@@ -77,7 +78,22 @@ func (p *MinimaxProvider) GenerateRequest(ctx context.Context, prompt string, ch
 		return "", fmt.Errorf("minimax returned empty response")
 	}
 
-	return result.Choices[0].Message.Content, nil
+	content := result.Choices[0].Message.Content
+
+	// MiniMax M2.5 returns JSON with "text" and "thinking" fields
+	// Try to parse as JSON and extract "text"
+	var contentObj map[string]json.RawMessage
+	if json.Unmarshal([]byte(content), &contentObj) == nil {
+		if textVal, ok := contentObj["text"]; ok {
+			var textStr string
+			if json.Unmarshal(textVal, &textStr) == nil {
+				return strings.TrimSpace(textStr), nil
+			}
+		}
+	}
+
+	// If not JSON, return as-is
+	return strings.TrimSpace(content), nil
 }
 
 // StreamRequest sends a streaming request to minimax provider
@@ -160,7 +176,7 @@ func (p *MinimaxProvider) buildPrompt(prompt string, characterCards []string) st
 	}
 	contextStr += "--- END CHARACTER CARDS ---\n\n"
 
-	return contextStr + prompt
+	return prompt + "\n\n" + contextStr
 }
 
 // minimaxRequest represents the request payload for minimax API
