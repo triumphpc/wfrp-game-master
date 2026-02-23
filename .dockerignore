@@ -1,0 +1,69 @@
+# Go binaries and cache
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+wfrp-bot
+*.test
+*.out
+go.work
+vendor/
+
+# IDE and editor files
+.idea/
+.vscode/
+.vs/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation and resources
+README.md
+README.txt
+AGENTS.md
+CLAUDE.md
+WARP.md
+docs/
+*.pdf
+
+# Python and virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# Test files
+*_test.go
+
+# Docker files (don't copy to container)
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Environment files (will be mounted)
+.env
+.env.local
+.env.*.local
+*.env
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+
+# OS specific
+Thumbs.db
+.DS_Store
