@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  wfrp-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wfrp-bot
+    restart: unless-stopped
+
+    # Environment variables from .env file
+    env_file:
+      - .env
+
+    # Mount volumes for data persistence
+    volumes:
+      # Mount rules directory for WFRP rules
+      - ./rules:/app/rules:ro
+
+      # Mount history directory for campaign data
+      - ./history:/app/history
+
+      # Mount characters directory
+      - ./characters:/app/characters
+
+      # Mount prompts directory
+      - ./prompts:/app/prompts:ro
+
+      # Mount storage for markdown files
+      - ./storage:/app/storage
+
+    # Network configuration
+    network_mode: host
+
+    # Resource limits (optional)
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
+    # Health check (optional)
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "wfrp-bot"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

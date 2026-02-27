@@ -1,0 +1,12 @@
+#!/bin/bash
+# WFRP Rules RAG - поиск правил для GM
+# Использование: wfrp-rules "запрос"
+
+QUERY="$1"
+if [ -z "$QUERY" ]; then
+    echo "Usage: wfrp-rules \"ваш вопрос о правилах\""
+    exit 1
+fi
+
+cd /home/node/.openclaw/workspace/wfrp-repo/.claude
+python3 rag_indexer.py search "$QUERY" 2>&1

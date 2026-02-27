@@ -1,0 +1,402 @@
+// Package game provides context loading for WFRP game sessions
+package game
+
+import (
+	"fmt"
+	"log"
+	"os"
+	"path/filepath"
+	"strings"
+)
+
+// ContextLoader loads game context from files and history
+type ContextLoader struct {
+	rulesPath    string
+	campaignPath string
+	historyPath  string
+}
+
+// NewContextLoader creates a new context loader
+func NewContextLoader(basePath string) *ContextLoader {
+	return &ContextLoader{
+		rulesPath:    filepath.Join(basePath, "rules"),
+		campaignPath: basePath,
+	}
+}
+
+// GameContext represents the full context for a game session
+type GameContext struct {
+	Campaign   string
+	Scenario   string
+	Characters []*CharacterSheet
+	Rules      []RuleReference
+	History    []SessionEntry
+	World      string
+}
+
+// CharacterSheet represents a loaded character sheet
+type CharacterSheet struct {
+	PlayerID   string
+	Name       string
+	Sheet      string
+	Stats      *CharacterStats
+	Inventory  []Item
+	Conditions []Condition
+}
+
+// RuleReference represents a reference to a game rule
+type RuleReference struct {
+	ID        string
+	Title     string
+	Location  string
+	Relevance string // "high", "medium", "low"
+}
+
+// SessionEntry represents a historical session entry
+type SessionEntry struct {
+	Date    string
+	Title   string
+	Summary string
+	Changes map[string]interface{}
+}
+
+// Item represents an inventory item
+type Item struct {
+	Name        string
+	Description string
+	Quantity    int
+	Cost        int
+}
+
+// Condition represents a character condition
+type Condition struct {
+	Name     string
+	Severity string // "minor", "serious", "critical"
+	Source   string
+}
+
+// LoadGameContext loads complete context for a session
+func (cl *ContextLoader) LoadGameContext(campaign string) (*GameContext, error) {
+	ctx := &GameContext{
+		Campaign:   campaign,
+		Characters: make([]*CharacterSheet, 0),
+		Rules:      make([]RuleReference, 0),
+		History:    make([]SessionEntry, 0),
+	}
+
+	// Load campaign characters
+	if err := cl.loadCharacters(ctx, campaign); err != nil {
+		return nil, fmt.Errorf("failed to load characters: %w", err)
+	}
+
+	// Load history
+	if err := cl.loadHistory(ctx, campaign); err != nil {
+		log.Printf("[CONTEXT] Failed to load history: %v", err)
+		// Non-fatal, continue
+	}
+
+	// Load relevant rules
+	cl.loadRules(ctx)
+
+	log.Printf("[CONTEXT] Loaded context for campaign %s: %d characters, %d history entries, %d rules",
+		campaign, len(ctx.Characters), len(ctx.History), len(ctx.Rules))
+
+	return ctx, nil
+}
+
+// loadCharacters loads all character sheets for a campaign
+func (cl *ContextLoader) loadCharacters(ctx *GameContext, campaign string) error {
+	charDir := filepath.Join(cl.campaignPath, campaign, "characters")
+
+	entries, err := os.ReadDir(charDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			log.Printf("[CONTEXT] Character directory not found: %s", charDir)
+			return nil
+		}
+		return fmt.Errorf("failed to read character directory: %w", err)
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
+			continue
+		}
+
+		charPath := filepath.Join(charDir, entry.Name())
+		sheet, err := os.ReadFile(charPath)
+		if err != nil {
+			log.Printf("[CONTEXT] Failed to read character %s: %v", entry.Name(), err)
+			continue
+		}
+
+		char := &CharacterSheet{
+			Sheet: string(sheet),
+		}
+
+		// Parse character sheet
+		stats, err := ParseCharacterStats(char.Sheet)
+		if err != nil {
+			log.Printf("[CONTEXT] Failed to parse stats for %s: %v", entry.Name(), err)
+		} else {
+			char.Stats = stats
+		}
+
+		char.Name = char.Stats.Name
+
+		// Extract player ID from filename
+		char.PlayerID = strings.TrimSuffix(entry.Name(), ".md")
+
+		ctx.Characters = append(ctx.Characters, char)
+	}
+
+	return nil
+}
+
+// loadHistory loads session history for a campaign
+func (cl *ContextLoader) loadHistory(ctx *GameContext, campaign string) error {
+	campDir := filepath.Join(cl.campaignPath, campaign)
+
+	entries, err := os.ReadDir(campDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
+			continue
+		}
+
+		// Parse date from filename (YYYY-MM-DD_HH-MM_description.md)
+		dateStr, summary, err := parseSessionFilename(entry.Name())
+		if err != nil {
+			log.Printf("[CONTEXT] Failed to parse session filename %s: %v", entry.Name(), err)
+			continue
+		}
+
+		// Read session content
+		histPath := filepath.Join(campDir, entry.Name())
+		content, err := os.ReadFile(histPath)
+		if err != nil {
+			log.Printf("[CONTEXT] Failed to read history %s: %v", entry.Name(), err)
+			continue
+		}
+
+		// Extract summary
+		summaryText := extractSessionSummary(string(content))
+		if summaryText != "" {
+			summary = summaryText
+		}
+
+		ctx.History = append(ctx.History, SessionEntry{
+			Date:    dateStr,
+			Title:   entry.Name(),
+			Summary: summary,
+			Changes: make(map[string]interface{}),
+		})
+	}
+
+	return nil
+}
+
+// loadRules loads relevant WFRP rules
+func (cl *ContextLoader) loadRules(ctx *GameContext) {
+	// These are key rule files that should be loaded
+	ruleFiles := []string{
+		"dict/ПРОВЕРКИ.md",
+		"dict/БОЙ.md",
+		"dict/ОРУЖИЕ.md",
+		"dict/КАРЬЕРЫ.md",
+		"dict/ЧАСТЫЕ_ОШИБКИ.md",
+	}
+
+	for _, ruleFile := range ruleFiles {
+		rulePath := filepath.Join(cl.rulesPath, ruleFile)
+
+		_, err := os.Stat(rulePath)
+		if os.IsNotExist(err) {
+			log.Printf("[CONTEXT] Rule file not found: %s", ruleFile)
+			continue
+		}
+
+		ctx.Rules = append(ctx.Rules, RuleReference{
+			ID:        filepath.Join("rules", ruleFile),
+			Title:     strings.TrimSuffix(filepath.Base(ruleFile), ".md"),
+			Location:  rulePath,
+			Relevance: "medium",
+		})
+	}
+}
+
+// parseSessionFilename extracts date and description from session filename
+func parseSessionFilename(filename string) (string, string, error) {
+	// Format: YYYY-MM-DD_HH-MM_description.md
+	// Parse date prefix
+	trimmed := strings.TrimSuffix(filename, ".md")
+
+	// Extract date-time prefix
+	parts := strings.SplitN(trimmed, "_", 3)
+	if len(parts) < 2 {
+		return trimmed, "", fmt.Errorf("invalid session filename format")
+	}
+
+	// Combine date parts
+	dateStr := parts[0] + " " + parts[1]
+
+	// Description is everything after the second underscore
+	description := ""
+	if len(parts) >= 3 {
+		description = strings.Join(parts[2:], "_")
+	}
+
+	return dateStr, description, nil
+}
+
+// extractSessionSummary extracts summary from session markdown
+func extractSessionSummary(content string) string {
+	lines := strings.Split(content, "\n")
+	for _, line := range lines {
+		if strings.HasPrefix(line, "## Summary") ||
+			strings.HasPrefix(line, "## Сводка") ||
+			strings.HasPrefix(line, "## Итог") {
+			// Extract summary content
+			summaryLines := make([]string, 0)
+			for i := 1; i < len(lines); i++ {
+				if strings.HasPrefix(lines[i], "##") {
+					break
+				}
+				summaryLines = append(summaryLines, lines[i])
+			}
+			return strings.Join(summaryLines, "\n")
+		}
+	}
+	return ""
+}
+
+// BuildPrompt constructs LLM prompt from game context
+func (ctx *GameContext) BuildPrompt(userInput string) string {
+	var prompt strings.Builder
+
+	// Add campaign context
+	prompt.WriteString(fmt.Sprintf("--- КОНТЕКСТ ИГРЫ ---\n"))
+	prompt.WriteString(fmt.Sprintf("Кампания: %s\n\n", ctx.Campaign))
+
+	// Add scenario if exists
+	if ctx.Scenario != "" {
+		prompt.WriteString(fmt.Sprintf("Сценарий: %s\n\n", ctx.Scenario))
+	}
+
+	// Add active characters
+	if len(ctx.Characters) > 0 {
+		prompt.WriteString("--- АКТИВНЫЕ ПЕРСОНАЖИ ---\n")
+		for _, char := range ctx.Characters {
+			prompt.WriteString(fmt.Sprintf("\n### %s\n", char.Name))
+			if char.Stats != nil {
+				prompt.WriteString(fmt.Sprintf("Характеристики: В%d/%d, С%d, Л%d, Инт%d, ВН%d, Об%d\n",
+					char.Stats.WS, char.Stats.BS, char.Stats.S, char.Stats.Ag,
+					char.Stats.Int, char.Stats.WP, char.Stats.Fel))
+				prompt.WriteString(fmt.Sprintf("Здоровье: %d/%d\n", char.Stats.CurrentHP, char.Stats.MaxHP))
+			}
+		}
+		prompt.WriteString("\n--- КОНЕЦ ПЕРСОНАЖЕЙ ---\n\n")
+	}
+
+	// Add recent history
+	if len(ctx.History) > 0 {
+		// Get last 3 sessions
+		historyCount := len(ctx.History)
+		startIdx := 0
+		if historyCount > 3 {
+			startIdx = historyCount - 3
+		}
+
+		prompt.WriteString("--- ПОСЛЕДНИЕ СОБЫТИЯ ---\n")
+		for i := startIdx; i < historyCount; i++ {
+			entry := ctx.History[i]
+			prompt.WriteString(fmt.Sprintf("%s: %s\n", entry.Date, entry.Summary))
+		}
+		prompt.WriteString("\n--- КОНЕЦ ИСТОРИИ ---\n\n")
+	}
+
+	// Add user input
+	prompt.WriteString("--- ВВОД ИГРОКА ---\n")
+	prompt.WriteString(userInput)
+	prompt.WriteString("\n--- КОНЕЦ ВВОДА ---\n\n")
+
+	return prompt.String()
+}
+
+// LoadRulesContent loads and returns rule file content
+func (cl *ContextLoader) LoadRulesContent(rulePath string) (string, error) {
+	// Ensure path is relative to rules directory
+	if !filepath.IsAbs(rulePath) && !strings.Contains(rulePath, "rules/") {
+		rulePath = filepath.Join(cl.rulesPath, rulePath)
+	}
+
+	content, err := os.ReadFile(rulePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to load rule file %s: %w", rulePath, err)
+	}
+
+	return string(content), nil
+}
+
+// SearchRules searches for rules matching a query
+func (cl *ContextLoader) SearchRules(query string) []RuleReference {
+	var results []RuleReference
+
+	queryLower := strings.ToLower(query)
+
+	for _, rule := range cl.GetRules() {
+		ruleTitle := strings.ToLower(rule.Title)
+
+		if strings.Contains(ruleTitle, queryLower) {
+			results = append(results, rule)
+		}
+	}
+
+	return results
+}
+
+// GetRules returns all available rules
+func (cl *ContextLoader) GetRules() []RuleReference {
+	rules := make([]RuleReference, 0)
+
+	// Scan rules directory for markdown files
+	dictPath := filepath.Join(cl.rulesPath, "dict")
+	entries, err := os.ReadDir(dictPath)
+	if err != nil {
+		log.Printf("[CONTEXT] Failed to read rules dict: %v", err)
+		return rules
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
+			continue
+		}
+
+		fullPath := filepath.Join(dictPath, entry.Name())
+		rules = append(rules, RuleReference{
+			ID:        filepath.Join("rules/dict", entry.Name()),
+			Title:     strings.TrimSuffix(entry.Name(), ".md"),
+			Location:  fullPath,
+			Relevance: "low",
+		})
+	}
+
+	return rules
+}
+
+// LoadScenario loads scenario from file
+func (cl *ContextLoader) LoadScenario(campaign, scenarioFile string) (string, error) {
+	scenarioPath := filepath.Join(cl.campaignPath, campaign, scenarioFile)
+
+	content, err := os.ReadFile(scenarioPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to load scenario %s: %w", scenarioPath, err)
+	}
+
+	return string(content), nil
+}
