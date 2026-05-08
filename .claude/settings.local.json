@@ -22,7 +22,13 @@
       "Bash(git restore:*)",
       "Bash(git commit:*)",
       "Bash(xxd:*)",
-      "Bash(go get:*)"
+      "Bash(go get:*)",
+      "Bash(pip3 install *)",
+      "WebSearch",
+      "Bash(mv /Users/s.vrulin/Devel/wfrp-game-master/.claude/skills/render-character-card/style.css /Users/s.vrulin/Devel/wfrp-game-master/.claude/skills/render-character-card/themes/parchment.css)",
+      "Bash(rm -rf /Users/s.vrulin/Devel/wfrp-game-master/.claude/skills/render-character-card/__pycache__)",
+      "Bash(rm -rf .claude/skills/render-character-card/__pycache__)",
+      "Bash(open /tmp/card_parchment.html /tmp/card_sylvan.html /tmp/card_dwarven-rune.html)"
     ]
   }
 }

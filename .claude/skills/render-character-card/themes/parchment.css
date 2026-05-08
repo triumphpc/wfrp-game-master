@@ -1,0 +1,202 @@
+/* Тема: parchment — пергамент + готика (классика WFRP) */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap');
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 24px;
+  background: #2b1810;
+  font-family: 'EB Garamond', 'Times New Roman', serif;
+  color: #2a1a0e;
+}
+
+.card {
+  max-width: 860px;
+  margin: 0 auto;
+  background:
+    radial-gradient(ellipse at top, rgba(255, 240, 200, 0.4) 0%, transparent 60%),
+    radial-gradient(ellipse at bottom, rgba(120, 80, 30, 0.15) 0%, transparent 60%),
+    linear-gradient(180deg, #f4e4bc 0%, #ebd9a8 50%, #d9c186 100%);
+  border: 3px double #6b4423;
+  border-radius: 4px;
+  padding: 36px 44px;
+  box-shadow:
+    inset 0 0 60px rgba(120, 80, 30, 0.25),
+    inset 0 0 8px rgba(60, 30, 10, 0.4),
+    0 8px 30px rgba(0, 0, 0, 0.6);
+  position: relative;
+}
+
+.card::before, .card::after {
+  content: '';
+  position: absolute;
+  width: 26px; height: 26px;
+  border: 2px solid #6b4423;
+}
+.card::before { top: 12px; left: 12px;  border-right: none; border-bottom: none; }
+.card::after  { bottom: 12px; right: 12px; border-left: none; border-top: none; }
+
+/* Header */
+.card-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.ornament {
+  font-size: 28px;
+  color: #6b4423;
+  margin-bottom: 4px;
+}
+.ornament::before { content: '⚜'; }
+
+.char-name {
+  font-family: 'Cinzel', 'Times New Roman', serif;
+  font-weight: 900;
+  font-size: 38px;
+  letter-spacing: 4px;
+  margin: 4px 0 6px;
+  color: #4a2810;
+  text-shadow: 1px 1px 0 rgba(255, 240, 200, 0.6);
+  text-transform: uppercase;
+}
+
+.subtitle {
+  font-family: 'EB Garamond', serif;
+  font-style: italic;
+  font-size: 18px;
+  color: #6b4423;
+  margin-bottom: 12px;
+}
+
+.ornament-line {
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, #6b4423 20%, #6b4423 80%, transparent 100%);
+  margin: 12px 0;
+  position: relative;
+}
+.ornament-line::after {
+  content: '❦';
+  position: absolute;
+  left: 50%;
+  top: -12px;
+  transform: translateX(-50%);
+  background: #f4e4bc;
+  padding: 0 10px;
+  color: #6b4423;
+  font-size: 16px;
+}
+
+/* Body */
+.card-body { font-size: 15px; line-height: 1.55; }
+
+.card-body h2 {
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  font-size: 19px;
+  color: #4a2810;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  border-bottom: 1px solid #8b5a2b;
+  padding-bottom: 6px;
+  margin-top: 24px;
+  margin-bottom: 12px;
+}
+
+.card-body h3 {
+  font-family: 'Cinzel', serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #6b4423;
+  margin-top: 16px;
+  margin-bottom: 8px;
+}
+
+.card-body h4, .card-body h5 {
+  font-family: 'Cinzel', serif;
+  font-size: 14px;
+  color: #6b4423;
+  margin: 10px 0 6px;
+}
+
+.card-body hr {
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #8b5a2b, transparent);
+  margin: 18px 0;
+}
+
+.card-body p { margin: 6px 0; }
+
+.card-body strong { color: #4a2810; }
+
+.card-body em { color: #6b4423; }
+
+/* Tables */
+.card-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0 16px;
+  background: rgba(255, 248, 220, 0.4);
+  font-size: 14px;
+}
+
+.card-body th, .card-body td {
+  padding: 6px 10px;
+  border: 1px solid #b08a5a;
+  text-align: left;
+}
+
+.card-body th {
+  background: rgba(139, 90, 43, 0.25);
+  font-family: 'Cinzel', serif;
+  font-weight: 600;
+  color: #4a2810;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 12px;
+}
+
+.card-body tr:nth-child(even) td {
+  background: rgba(235, 217, 168, 0.4);
+}
+
+/* Lists */
+.card-body ul, .card-body ol {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+.card-body li { margin: 3px 0; }
+
+/* Code/inline */
+.card-body code {
+  background: rgba(139, 90, 43, 0.15);
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  color: #4a2810;
+}
+
+/* Blockquote */
+.card-body blockquote {
+  border-left: 3px solid #8b5a2b;
+  padding-left: 14px;
+  margin: 10px 0;
+  font-style: italic;
+  color: #6b4423;
+}
+
+/* Footer */
+.card-footer {
+  margin-top: 28px;
+  text-align: center;
+}
+
+.footer-mark {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: #8b5a2b;
+  text-transform: uppercase;
+}

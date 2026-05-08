@@ -1,0 +1,277 @@
+/* Тема: dwarven-rune — гномий: камень + золото + руны + медные заклёпки */
+@import url('https://fonts.googleapis.com/css2?family=Eczar:wght@600;700;800&family=Marcellus&display=swap');
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 24px;
+  /* Глубина пещеры */
+  background:
+    radial-gradient(ellipse at top, rgba(80, 60, 30, 0.4) 0%, transparent 60%),
+    linear-gradient(180deg, #1c1612 0%, #0d0907 100%);
+  font-family: 'Marcellus', 'Georgia', serif;
+  color: #2a201a;
+}
+
+.card {
+  max-width: 860px;
+  margin: 0 auto;
+  /* Гранитный камень: серый базис + случайные тёмные пятна */
+  background:
+    /* Тёмные «трещины» */
+    repeating-linear-gradient(
+      37deg,
+      transparent 0px,
+      transparent 40px,
+      rgba(40, 30, 20, 0.06) 40px,
+      rgba(40, 30, 20, 0.06) 41px
+    ),
+    repeating-linear-gradient(
+      -52deg,
+      transparent 0px,
+      transparent 60px,
+      rgba(60, 50, 35, 0.05) 60px,
+      rgba(60, 50, 35, 0.05) 61px
+    ),
+    radial-gradient(circle at 25% 30%, rgba(60, 50, 35, 0.3) 0%, transparent 25%),
+    radial-gradient(circle at 75% 70%, rgba(40, 32, 22, 0.35) 0%, transparent 30%),
+    radial-gradient(circle at 50% 50%, rgba(140, 125, 100, 0.15) 0%, transparent 70%),
+    linear-gradient(160deg, #8a7d6a 0%, #6e6356 50%, #524a40 100%);
+  /* Двойная рамка: внешняя медная, внутренняя золото */
+  border: 4px solid #6b4423;
+  border-radius: 4px;
+  padding: 44px 50px 36px;
+  box-shadow:
+    inset 0 0 0 2px #b8923b,
+    inset 0 0 6px 4px rgba(0, 0, 0, 0.4),
+    inset 0 0 80px rgba(20, 15, 8, 0.5),
+    0 8px 30px rgba(0, 0, 0, 0.8);
+  position: relative;
+}
+
+/* Медные заклёпки в углах и по серединам сторон */
+.card::before, .card::after {
+  content: '';
+  position: absolute;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #d4a85a 0%, #a05a2c 60%, #5a2f15 100%);
+  box-shadow:
+    0 0 0 1px #2a1610,
+    0 1px 2px rgba(0,0,0,0.6),
+    inset -1px -1px 2px rgba(0,0,0,0.5);
+}
+.card::before { top: 12px; left: 12px; }
+.card::after  { top: 12px; right: 12px; }
+
+/* Header */
+.card-header {
+  text-align: center;
+  margin-bottom: 24px;
+  position: relative;
+}
+
+/* Дополнительные заклёпки внизу через ornament */
+.ornament {
+  font-family: 'Eczar', serif;
+  font-size: 26px;
+  font-weight: 800;
+  color: #b8923b;
+  margin-bottom: 6px;
+  letter-spacing: 8px;
+  /* Стилизованные руны */
+  text-shadow: 0 1px 0 #2a1610, 0 2px 3px rgba(0,0,0,0.6);
+}
+.ornament::before { content: 'ᚦ ᚱ ᚢ ᚾ'; }
+
+.char-name {
+  font-family: 'Eczar', serif;
+  font-weight: 800;
+  font-size: 42px;
+  letter-spacing: 4px;
+  margin: 4px 0 6px;
+  color: #f0d77a;
+  text-transform: uppercase;
+  text-shadow:
+    0 1px 0 #2a1610,
+    0 2px 0 #1a0e08,
+    0 3px 4px rgba(0, 0, 0, 0.8),
+    0 0 12px rgba(184, 146, 59, 0.3);
+}
+
+.subtitle {
+  font-family: 'Marcellus', serif;
+  font-style: italic;
+  font-size: 18px;
+  color: #d4a85a;
+  margin-bottom: 12px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.7);
+}
+
+.ornament-line {
+  height: 3px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    #6b4423 10%,
+    #b8923b 30%,
+    #f0d77a 50%,
+    #b8923b 70%,
+    #6b4423 90%,
+    transparent 100%);
+  margin: 14px 0;
+  position: relative;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+.ornament-line::after {
+  content: '⚒';
+  position: absolute;
+  left: 50%;
+  top: -16px;
+  transform: translateX(-50%);
+  background: #6e6356;
+  padding: 0 12px;
+  color: #f0d77a;
+  font-size: 22px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+}
+
+/* Body */
+.card-body {
+  font-size: 15px;
+  line-height: 1.55;
+  /* Полупрозрачная "табличка" поверх камня для читаемости */
+  background: rgba(220, 210, 185, 0.92);
+  border: 1px solid #6b4423;
+  padding: 20px 26px;
+  border-radius: 2px;
+  box-shadow:
+    inset 0 0 0 1px #b8923b,
+    inset 0 0 30px rgba(120, 80, 40, 0.15);
+}
+
+.card-body h2 {
+  font-family: 'Eczar', serif;
+  font-weight: 800;
+  font-size: 20px;
+  color: #4a2810;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  border-bottom: 2px solid #b8923b;
+  padding-bottom: 6px;
+  margin-top: 22px;
+  margin-bottom: 12px;
+  text-shadow: 0 1px 0 rgba(255, 240, 210, 0.6);
+}
+.card-body h2::before {
+  content: '⚒ ';
+  color: #a05a2c;
+  font-size: 16px;
+}
+
+.card-body h3 {
+  font-family: 'Eczar', serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #6b4423;
+  margin-top: 16px;
+  margin-bottom: 8px;
+  letter-spacing: 1px;
+}
+
+.card-body h4, .card-body h5 {
+  font-family: 'Eczar', serif;
+  font-size: 14px;
+  color: #6b4423;
+  margin: 10px 0 6px;
+  letter-spacing: 1px;
+}
+
+.card-body hr {
+  border: none;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #b8923b 30%, #b8923b 70%, transparent);
+  margin: 18px 0;
+}
+
+.card-body p { margin: 6px 0; }
+
+.card-body strong { color: #4a2810; font-weight: 700; }
+
+.card-body em { color: #6b4423; }
+
+/* Tables — каменные плиты с золотыми границами */
+.card-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0 16px;
+  background: rgba(255, 248, 220, 0.6);
+  font-size: 14px;
+  border: 2px solid #6b4423;
+  box-shadow: inset 0 0 0 1px #b8923b;
+}
+
+.card-body th, .card-body td {
+  padding: 7px 11px;
+  border: 1px solid #a08560;
+  text-align: left;
+}
+
+.card-body th {
+  background: linear-gradient(180deg, #4a3826 0%, #2a1c12 100%);
+  color: #f0d77a;
+  font-family: 'Eczar', serif;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-size: 12px;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.8);
+  border-color: #b8923b;
+}
+
+.card-body tr:nth-child(even) td {
+  background: rgba(220, 200, 160, 0.5);
+}
+
+/* Lists */
+.card-body ul, .card-body ol {
+  margin: 8px 0;
+  padding-left: 26px;
+}
+.card-body li { margin: 3px 0; }
+.card-body ul li::marker { color: #a05a2c; content: '◆ '; }
+
+/* Code */
+.card-body code {
+  background: rgba(74, 40, 16, 0.18);
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  color: #4a2810;
+}
+
+/* Blockquote */
+.card-body blockquote {
+  border-left: 3px solid #b8923b;
+  padding: 8px 14px;
+  margin: 10px 0;
+  font-style: italic;
+  color: #6b4423;
+  background: rgba(184, 146, 59, 0.1);
+}
+
+/* Footer */
+.card-footer {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.footer-mark {
+  font-family: 'Eczar', serif;
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: #d4a85a;
+  text-transform: uppercase;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.7);
+}

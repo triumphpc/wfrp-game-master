@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>{{ name }}</title>
+<style>{{ css }}</style>
+</head>
+<body class="theme-{{ theme }}">
+  <div class="card">
+    <div class="card-header">
+      <div class="ornament"></div>
+      <h1 class="char-name">{{ name }}</h1>
+      {% if subtitle %}
+      <div class="subtitle">«{{ subtitle }}»</div>
+      {% endif %}
+      <div class="ornament-line"></div>
+    </div>
+
+    <div class="card-body">
+      {{ body | safe }}
+    </div>
+
+    <div class="card-footer">
+      <div class="ornament-line"></div>
+      <div class="footer-mark">Warhammer Fantasy Roleplay 4E</div>
+    </div>
+  </div>
+</body>
+</html>
