@@ -1,0 +1,30 @@
+name: wfrp-rag
+version: 1.0.0
+description: WFRP 4E RAG — mandatory rules + history context injection via FTS5
+provides_tools:
+  - wfrp_rag_search
+provides_hooks:
+  - pre_llm_call
+  - post_llm_call
+  - post_tool_call
+metadata:
+  hermes:
+    config:
+      - key: wfrp-rag.rules_dir
+        description: Path to WFRP rules directory
+        default: "./rules"
+      - key: wfrp-rag.history_dir
+        description: Path to session history directory
+        default: "./history"
+      - key: wfrp-rag.rules_k
+        description: Number of rule snippets to inject per turn
+        default: "3"
+      - key: wfrp-rag.history_k
+        description: Number of history snippets to inject per turn
+        default: "2"
+      - key: wfrp-rag.max_context_chars
+        description: Max characters of injected context per turn
+        default: "2000"
+      - key: wfrp-rag.current_campaign
+        description: Campaign name to filter history search (e.g. "Тени Старого Тракта"). Use /wfrp-rag campaign to set at runtime.
+        default: ""

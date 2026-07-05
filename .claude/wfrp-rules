@@ -1,12 +1,22 @@
 #!/bin/bash
 # WFRP Rules RAG - поиск правил для GM
-# Использование: wfrp-rules "запрос"
+# Использование: .claude/wfrp-rules "запрос"
+# Если RAG-индекс недоступен, использует ripgrep
 
 QUERY="$1"
 if [ -z "$QUERY" ]; then
-    echo "Usage: wfrp-rules \"ваш вопрос о правилах\""
+    echo "Usage: .claude/wfrp-rules \"ваш вопрос о правилах\""
     exit 1
 fi
 
-cd /home/node/.openclaw/workspace/wfrp-repo/.claude
-python3 rag_indexer.py search "$QUERY" 2>&1
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+
+INDEX_DIR="${PROJECT_DIR}/.rag_index"
+INDEXER="${SCRIPT_DIR}/rag_indexer.py"
+
+if [ -d "${INDEX_DIR}" ] && [ -f "${INDEX_DIR}/index.pkl" ]; then
+    python3 "${INDEXER}" search "$QUERY" 2>&1
+else
+    rg -iC5 --no-heading --max-count=20 "${QUERY}" "${PROJECT_DIR}/rules/" 2>&1 || echo "RAG и ripgrep недоступны. Установите: pip install sentence-transformers numpy && python3 ${INDEXER} index"
+fi

@@ -1,0 +1,28 @@
+# Hermes Agent configuration for WFRP Game Master
+# Copy this file to ~/.hermes/config.yaml on the VPS and adjust paths.
+#
+# Quick setup:
+#   1. Clone this repo to ~/wfrp-game-master on the VPS
+#   2. cp ~/wfrp-game-master/hermes.config.yaml ~/.hermes/config.yaml
+#   3. hermes plugins enable wfrp-rag
+#   4. hermes chat
+
+plugins:
+  enabled:
+    - wfrp-rag
+
+skills:
+  external_dirs:
+    - ~/wfrp-game-master/.claude/skills
+
+# WFRP RAG plugin config
+# These override defaults from plugins/wfrp-rag/plugin.yaml
+wfrp-rag:
+  rules_dir: ~/wfrp-game-master/rules
+  history_dir: ~/wfrp-game-master/history
+  rules_k: 3
+  history_k: 2
+  max_context_chars: 2000
+  # Set the active campaign. Use /wfrp-rag campaign "Name" at runtime to switch.
+  # Leave empty to search across all campaigns.
+  current_campaign: "Тени Старого Тракта"

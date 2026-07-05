@@ -40,3 +40,6 @@ Thumbs.db
 docs/
 wfrp_character_cards.pdf
 
+# WFRP RAG plugin — runtime index (not committed)
+plugins/wfrp-rag/data/
+
