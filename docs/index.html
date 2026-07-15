@@ -40,12 +40,27 @@
 body {
   background: var(--bg);
   background-image:
+    url('img/bg-art.jpg'),
     radial-gradient(ellipse at 50% 0%, rgba(139, 0, 0, 0.08) 0%, transparent 60%),
     radial-gradient(ellipse at 50% 100%, rgba(201, 162, 39, 0.04) 0%, transparent 50%);
+  background-attachment: fixed;
+  background-position: center top;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-blend-mode: multiply, normal, normal;
   color: var(--text);
   font-family: Georgia, 'Times New Roman', serif;
   line-height: 1.6;
   min-height: 100vh;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(13, 13, 13, 0.82);
+  z-index: -1;
+  pointer-events: none;
 }
 
 .container {
@@ -56,18 +71,28 @@ body {
 
 header {
   text-align: center;
-  padding: 28px 0 20px;
+  padding: 48px 20px 32px;
   border-bottom: 1px solid rgba(201, 162, 39, 0.2);
   margin-bottom: 28px;
+  background-image:
+    linear-gradient(180deg, rgba(13,13,13,0.5) 0%, rgba(13,13,13,0.85) 70%, rgba(13,13,13,0.95) 100%),
+    url('img/banner.jpg');
+  background-size: cover;
+  background-position: center 30%;
+  border-radius: var(--radius);
+  position: relative;
+  overflow: hidden;
 }
 
 header h1 {
   font-family: 'Cinzel', 'Trajan Pro', 'Times New Roman', serif;
-  font-size: 2.2rem;
+  font-size: 2.4rem;
   font-weight: 700;
   color: var(--gold);
   letter-spacing: 0.05em;
-  text-shadow: 0 0 30px rgba(201, 162, 39, 0.3);
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.9), 0 0 30px rgba(201, 162, 39, 0.3);
+  position: relative;
+  z-index: 1;
 }
 
 header p {
@@ -75,6 +100,9 @@ header p {
   font-size: 0.9rem;
   margin-top: 6px;
   font-style: italic;
+  position: relative;
+  z-index: 1;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8);
 }
 
 /* --- Section panels --- */
@@ -96,6 +124,20 @@ header p {
   margin-bottom: 16px;
   padding-bottom: 8px;
   border-bottom: 1px solid rgba(201, 162, 39, 0.15);
+}
+
+/* --- Art divider --- */
+.art-divider {
+  height: 120px;
+  background-image:
+    linear-gradient(180deg, rgba(13,13,13,0.4) 0%, rgba(13,13,13,0.6) 50%, rgba(13,13,13,0.4) 100%),
+    url('img/divider.jpg');
+  background-size: cover;
+  background-position: center;
+  border-radius: var(--radius);
+  margin: 0 0 20px;
+  border: 1px solid var(--stone-light);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 /* --- Dice tray --- */
@@ -574,6 +616,8 @@ header p {
     <div class="roll-result" id="tray-result"></div>
   </div>
 
+  <div class="art-divider" role="separator" aria-hidden="true"></div>
+
   <!-- Skill Check & Damage -->
   <div class="section">
     <div class="mode-grid">
@@ -638,6 +682,8 @@ header p {
     <h2>Навыки — шпаргалка</h2>
     <div class="skills-grid" id="skills-grid"></div>
   </div>
+
+  <div class="art-divider" role="separator" aria-hidden="true"></div>
 
   <!-- History -->
   <div class="section">
