@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WFRP 4e Dice Roller — Old World Dice</title>
+<meta name="description" content="Кубики для Warhammer Fantasy Roleplay 4th Edition. d100, d10, проверки навыков, урон, разброс.">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* ===== STYLES ===== */
+
+/* --- Theme tokens --- */
+:root {
+  --bg: #0d0d0d;
+  --bg-panel: #1a1612;
+  --gold: #c9a227;
+  --gold-dim: #8a6f1a;
+  --blood: #8b0000;
+  --blood-bright: #c41e1e;
+  --parchment: #d4c4a0;
+  --stone: #2a2a2a;
+  --stone-light: #3a3530;
+  --text: #e0d8c8;
+  --text-dim: #8a8278;
+  --text-muted: #5a544c;
+  --success: #4a7a3a;
+  --fail: #6a2a2a;
+  --cube-size: 64px;
+  --cube-half: 32px;
+  --radius: 6px;
+  --transition: 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* --- Base layout --- */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  background-image:
+    radial-gradient(ellipse at 50% 0%, rgba(139, 0, 0, 0.08) 0%, transparent 60%),
+    radial-gradient(ellipse at 50% 100%, rgba(201, 162, 39, 0.04) 0%, transparent 50%);
+  color: var(--text);
+  font-family: Georgia, 'Times New Roman', serif;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px 16px 60px;
+}
+
+header {
+  text-align: center;
+  padding: 28px 0 20px;
+  border-bottom: 1px solid rgba(201, 162, 39, 0.2);
+  margin-bottom: 28px;
+}
+
+header h1 {
+  font-family: 'Cinzel', 'Trajan Pro', 'Times New Roman', serif;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 30px rgba(201, 162, 39, 0.3);
+}
+
+header p {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  margin-top: 6px;
+  font-style: italic;
+}
+
+/* --- Section panels --- */
+.section {
+  background: var(--bg-panel);
+  border: 1px solid var(--stone-light);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+}
+
+.section h2 {
+  font-family: 'Cinzel', 'Trajan Pro', 'Times New Roman', serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: 0.04em;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(201, 162, 39, 0.15);
+}
+
+/* --- Dice tray --- */
+.dice-tray {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 40px;
+  flex-wrap: wrap;
+  padding: 30px 0;
+}
+
+.dice-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.dice-group .label {
+  font-family: 'Cinzel', serif;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+}
+
+.dice-pair {
+  display: flex;
+  gap: 8px;
+}
+
+/* --- 3D Cube --- */
+.cube-scene {
+  width: var(--cube-size);
+  height: var(--cube-size);
+  perspective: 300px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.cube-scene:focus { outline: 2px solid var(--gold); outline-offset: 4px; border-radius: 4px; }
+
+.cube {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform var(--transition);
+}
+
+.face {
+  position: absolute;
+  width: var(--cube-size);
+  height: var(--cube-size);
+  background: linear-gradient(145deg, #2a2418, #1a160e);
+  border: 1px solid var(--gold-dim);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  color: var(--gold);
+  font-size: 1.3rem;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 0 8px rgba(201, 162, 39, 0.3);
+}
+
+.face.front  { transform: translateZ(var(--cube-half)); }
+.face.back   { transform: rotateY(180deg) translateZ(var(--cube-half)); }
+.face.right  { transform: rotateY(90deg) translateZ(var(--cube-half)); }
+.face.left   { transform: rotateY(-90deg) translateZ(var(--cube-half)); }
+.face.top    { transform: rotateX(90deg) translateZ(var(--cube-half)); }
+.face.bottom { transform: rotateX(-90deg) translateZ(var(--cube-half)); }
+
+/* --- Result display --- */
+.roll-result {
+  text-align: center;
+  margin-top: 16px;
+  min-height: 32px;
+}
+
+.roll-result .value {
+  font-family: 'Cinzel', serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.roll-result .detail {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+/* --- Skill check / Damage / Scatter UI --- */
+.mode-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 640px) {
+  .mode-grid { grid-template-columns: 1fr; }
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.input-group label {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  min-width: 70px;
+}
+
+.input-group input,
+.input-group select {
+  background: var(--stone);
+  border: 1px solid var(--stone-light);
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: 4px;
+  font-family: Georgia, serif;
+  font-size: 0.95rem;
+  width: 80px;
+  text-align: center;
+}
+
+.input-group input:focus,
+.input-group select:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px rgba(201, 162, 39, 0.3);
+}
+
+.input-group .hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* --- Buttons --- */
+.btn {
+  display: inline-block;
+  background: linear-gradient(180deg, #3a3128, #2a2418);
+  border: 1px solid var(--gold-dim);
+  color: var(--gold);
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-family: 'Cinzel', serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.btn:hover {
+  background: linear-gradient(180deg, #4a3f30, #3a3128);
+  border-color: var(--gold);
+  box-shadow: 0 0 12px rgba(201, 162, 39, 0.2);
+}
+
+.btn:active { transform: translateY(1px); }
+
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn.btn-block { width: 100%; }
+
+.btn.btn-small {
+  padding: 5px 12px;
+  font-size: 0.8rem;
+}
+
+.btn.btn-danger {
+  border-color: var(--blood);
+  color: var(--blood-bright);
+}
+
+.btn.btn-danger:hover {
+  background: linear-gradient(180deg, #3a1818, #2a1010);
+  border-color: var(--blood-bright);
+}
+
+/* --- Resolution panel --- */
+.resolution {
+  margin-top: 16px;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: var(--radius);
+  border-left: 3px solid var(--stone-light);
+  display: none;
+}
+
+.resolution.show { display: block; }
+
+.resolution .outcome {
+  font-family: 'Cinzel', serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.resolution .outcome.success { color: var(--success); border-left-color: var(--success); }
+.resolution .outcome.fail { color: var(--fail); }
+.resolution .outcome.critical { color: var(--gold); text-shadow: 0 0 12px rgba(201, 162, 39, 0.5); }
+.resolution .outcome.fumble { color: var(--blood-bright); text-shadow: 0 0 12px rgba(196, 30, 30, 0.5); }
+
+.resolution .resolution-item {
+  font-size: 0.9rem;
+  color: var(--text-dim);
+  margin: 2px 0;
+}
+
+.resolution .resolution-item strong { color: var(--text); }
+
+.resolution.critical { border-left-color: var(--gold); }
+.resolution.fumble { border-left-color: var(--blood-bright); }
+
+/* --- Damage dice display --- */
+.dice-display {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+  justify-content: center;
+}
+
+.die-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  background: var(--stone);
+  border: 1px solid var(--stone-light);
+  border-radius: 4px;
+  font-family: 'Cinzel', serif;
+  font-weight: 600;
+  color: var(--gold);
+  font-size: 0.95rem;
+  padding: 0 6px;
+}
+
+.die-pill.cancelled {
+  text-decoration: line-through;
+  opacity: 0.4;
+}
+
+.die-pill.exploded {
+  border-color: var(--blood-bright);
+  color: var(--blood-bright);
+}
+
+/* --- Quick skills --- */
+.skills-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.skill-chip {
+  background: var(--stone);
+  border: 1px solid var(--stone-light);
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px;
+}
+
+.skill-chip:hover {
+  border-color: var(--gold-dim);
+  background: var(--stone-light);
+}
+
+.skill-chip .char {
+  color: var(--gold);
+  font-family: 'Cinzel', serif;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+/* --- History --- */
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(201, 162, 39, 0.15);
+}
+
+.history-header h2 { margin: 0; border: none; padding: 0; }
+
+.history-actions { display: flex; gap: 8px; }
+
+.history-list {
+  max-height: 400px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.history-list::-webkit-scrollbar { width: 6px; }
+.history-list::-webkit-scrollbar-track { background: var(--bg); }
+.history-list::-webkit-scrollbar-thumb { background: var(--stone-light); border-radius: 3px; }
+
+.history-entry {
+  display: grid;
+  grid-template-columns: 60px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.25);
+  border-left: 3px solid var(--stone-light);
+  border-radius: 0 4px 4px 0;
+  font-size: 0.85rem;
+  transition: background 0.15s;
+}
+
+.history-entry:hover { background: rgba(0, 0, 0, 0.4); }
+
+.history-entry.critical { border-left-color: var(--gold); }
+.history-entry.fumble { border-left-color: var(--blood-bright); }
+
+.history-entry .time {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-family: 'Cinzel', serif;
+}
+
+.history-entry .desc { color: var(--text); }
+
+.history-entry .desc .roll-val {
+  font-family: 'Cinzel', serif;
+  font-weight: 600;
+  color: var(--gold);
+}
+
+.history-entry .desc .outcome-tag {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+.history-entry .desc .outcome-tag.success { background: rgba(74, 122, 58, 0.3); color: #6aaa5a; }
+.history-entry .desc .outcome-tag.fail { background: rgba(106, 42, 42, 0.3); color: #aa5a5a; }
+.history-entry .desc .outcome-tag.critical { background: rgba(201, 162, 39, 0.2); color: var(--gold); }
+.history-entry .desc .outcome-tag.fumble { background: rgba(196, 30, 30, 0.2); color: var(--blood-bright); }
+
+.history-entry .meta {
+  text-align: right;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+}
+
+.history-empty {
+  text-align: center;
+  padding: 30px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* --- Toast --- */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--bg-panel);
+  border: 1px solid var(--gold-dim);
+  color: var(--text);
+  padding: 12px 24px;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  transition: all 0.3s;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* --- Reduced motion --- */
+@media (prefers-reduced-motion: reduce) {
+  .cube { transition: none !important; }
+}
+
+/* --- Responsive --- */
+@media (min-width: 1024px) {
+  :root { --cube-size: 72px; --cube-half: 36px; }
+}
+
+@media (max-width: 640px) {
+  header h1 { font-size: 1.6rem; }
+  .dice-tray { gap: 20px; }
+  .input-group label { min-width: 60px; }
+  .history-entry {
+    grid-template-columns: 50px 1fr;
+  }
+  .history-entry .meta { grid-column: 2; text-align: left; }
+}
+</style>
+</head>
+<body>
+<!-- ===== HTML BODY ===== -->
+<div class="container">
+
+  <header>
+    <h1>Old World Dice</h1>
+    <p>Кубики для Warhammer Fantasy Roleplay 4th Edition</p>
+  </header>
+
+  <!-- Dice Tray -->
+  <div class="section">
+    <h2>Бросок кубиков</h2>
+    <div class="dice-tray">
+      <div class="dice-group">
+        <span class="label">d100</span>
+        <div class="dice-pair">
+          <div class="cube-scene" id="d100-tens" role="button" tabindex="0" aria-label="Бросить d100 десятки">
+            <div class="cube">
+              <div class="face front">00</div>
+              <div class="face back">40</div>
+              <div class="face right">10</div>
+              <div class="face left">50</div>
+              <div class="face top">20</div>
+              <div class="face bottom">30</div>
+            </div>
+          </div>
+          <div class="cube-scene" id="d100-units" role="button" tabindex="0" aria-label="Бросить d100 единицы">
+            <div class="cube">
+              <div class="face front">0</div>
+              <div class="face back">4</div>
+              <div class="face right">1</div>
+              <div class="face left">5</div>
+              <div class="face top">2</div>
+              <div class="face bottom">3</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="dice-group">
+        <span class="label">d10</span>
+        <div class="cube-scene" id="d10-cube" role="button" tabindex="0" aria-label="Бросить d10">
+          <div class="cube">
+            <div class="face front">1</div>
+            <div class="face back">4</div>
+            <div class="face right">2</div>
+            <div class="face left">5</div>
+            <div class="face top">3</div>
+            <div class="face bottom">6</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="roll-result" id="tray-result"></div>
+  </div>
+
+  <!-- Skill Check & Damage -->
+  <div class="section">
+    <div class="mode-grid">
+
+      <!-- Skill Check -->
+      <div>
+        <h2>Проверка навыка</h2>
+        <div class="input-group">
+          <label for="sc-target">Цель</label>
+          <input type="number" id="sc-target" min="1" max="100" value="50" aria-label="Целевое число">
+        </div>
+        <div class="input-group">
+          <label for="sc-mod">Модифик.</label>
+          <input type="number" id="sc-mod" value="0" aria-label="Модификатор от -30 до +30">
+          <span class="hint">±30 макс</span>
+        </div>
+        <div id="sc-hint" class="input-group" style="display:none;">
+          <span class="hint" id="sc-hint-text"></span>
+        </div>
+        <button class="btn btn-block" id="sc-roll" aria-label="Бросить проверку навыка">Бросить проверку</button>
+        <div class="resolution" id="sc-resolution"></div>
+      </div>
+
+      <!-- Damage -->
+      <div>
+        <h2>Урон</h2>
+        <div class="input-group">
+          <label for="dmg-count">Кубиков</label>
+          <input type="number" id="dmg-count" min="1" max="10" value="2" aria-label="Количество d10">
+        </div>
+        <div class="input-group">
+          <label for="dmg-mod">+Урон</label>
+          <input type="number" id="dmg-mod" value="4" aria-label="Модификатор урона">
+        </div>
+        <div class="input-group">
+          <label for="dmg-quality">Качество</label>
+          <select id="dmg-quality" aria-label="Качество оружия">
+            <option value="none">Обычное</option>
+            <option value="-1s">−1s (отменить 1)</option>
+            <option value="-2s">−2s (отменить 2)</option>
+          </select>
+        </div>
+        <button class="btn btn-block" id="dmg-roll" aria-label="Бросить урон">Бросить урон</button>
+        <div class="resolution" id="dmg-resolution"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Scatter -->
+  <div class="section">
+    <h2>Разброс (Scatter)</h2>
+    <p style="font-size:0.85rem;color:var(--text-dim);margin-bottom:12px;">
+      Провал стрельбы → отклонение снаряда. d10 направление (1–8), 2d10 дистанция в ярдах.
+    </p>
+    <button class="btn" id="scatter-roll" aria-label="Бросить разброс">Бросить разброс</button>
+    <div class="resolution" id="scatter-resolution"></div>
+  </div>
+
+  <!-- Quick Skills -->
+  <div class="section">
+    <h2>Навыки — шпаргалка</h2>
+    <div class="skills-grid" id="skills-grid"></div>
+  </div>
+
+  <!-- History -->
+  <div class="section">
+    <div class="history-header">
+      <h2>История бросков</h2>
+      <div class="history-actions">
+        <button class="btn btn-small" id="copy-md" aria-label="Скопировать как Markdown">Copy MD</button>
+        <button class="btn btn-small btn-danger" id="clear-history" aria-label="Очистить историю">Очистить</button>
+      </div>
+    </div>
+    <div class="history-list" id="history-list">
+      <div class="history-empty">История пуста. Бросьте кубик.</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===== DICE LOGIC ===== */
+
+// --- RNG ---
+function rollD100() {
+  return Math.floor(Math.random() * 100) + 1; // 1–100
+}
+
+function rollD10() {
+  return Math.floor(Math.random() * 10) + 1; // 1–10, never 0
+}
+
+function rollD10s(n) {
+  const results = [];
+  for (let i = 0; i < n; i++) results.push(rollD10());
+  return results;
+}
+
+// --- 3D Cube animation ---
+// Each face index maps to a rotation that brings it to the front.
+// Faces: 0=front, 1=back, 2=right, 3=left, 4=top, 5=bottom
+const FACE_ROTATIONS = [
+  { x: 0,   y: 0   },   // front
+  { x: 0,   y: 180 },   // back
+  { x: 0,   y: -90 },   // right
+  { x: 0,   y: 90  },   // left
+  { x: -90, y: 0   },   // top
+  { x: 90,  y: 0   },   // bottom
+];
+
+// Display values for each cube type. JS swaps face text before animating.
+// d100 tens: 00,10,20,30,40,50,60,70,80,90 (10 values, cube has 6 faces)
+// d100 units: 0-9 (10 values)
+// d10: 1-10 (10 values)
+// We map the rolled value to a face index (0-5) and set the face text.
+
+function setCubeFaces(cubeEl, values) {
+  const faces = cubeEl.querySelectorAll('.face');
+  // values is an array of 6 strings to display on faces 0-5
+  for (let i = 0; i < 6 && i < values.length; i++) {
+    faces[i].textContent = values[i];
+  }
+}
+
+function rollCube(cubeEl, faceIndex) {
+  const rot = FACE_ROTATIONS[faceIndex];
+  const spinsX = 2 + Math.floor(Math.random() * 2); // 2-3 full spins
+  const spinsY = 2 + Math.floor(Math.random() * 2);
+  const finalX = rot.x + 360 * spinsX;
+  const finalY = rot.y + 360 * spinsY;
+  cubeEl.style.transform = `rotateX(${finalX}deg) rotateY(${finalY}deg)`;
+}
+
+// Map a value (0-9 for units/d10, 0-9 for tens×10) to a face index (0-5)
+// and prepare the 6 face labels so the target face shows the value.
+function prepareCube(cubeEl, displayValue, allValues) {
+  // Pick a face index (cycle based on value to add variety)
+  const faceIndex = displayValue % 6;
+  // Build 6 face labels: put displayValue on the chosen face, fill others from allValues
+  const faces = cubeEl.querySelectorAll('.face');
+  const shuffled = [...allValues].sort(() => Math.random() - 0.5);
+  let shuffleIdx = 0;
+  for (let i = 0; i < 6; i++) {
+    if (i === faceIndex) {
+      faces[i].textContent = displayValue;
+    } else {
+      // Avoid duplicating the display value on other faces
+      let val = shuffled[shuffleIdx % shuffled.length];
+      while (val === displayValue && shuffled.length > 1) {
+        shuffleIdx++;
+        val = shuffled[shuffleIdx % shuffled.length];
+      }
+      shuffleIdx++;
+      faces[i].textContent = val;
+    }
+  }
+  return faceIndex;
+}
+
+// --- Tray result display ---
+function showTrayResult(text, detail) {
+  const el = document.getElementById('tray-result');
+  el.innerHTML = `<div class="value">${text}</div>${detail ? `<div class="detail">${detail}</div>` : ''}`;
+}
+
+// --- Wire d100 click ---
+function handleD100Roll() {
+  const value = rollD100();
+  const tens = Math.floor(value / 10) * 10;
+  const units = value % 10;
+  const tensDisplay = tens === 0 ? '00' : String(tens);
+  const unitsDisplay = String(units);
+
+  const tensCube = document.querySelector('#d100-tens .cube');
+  const unitsCube = document.querySelector('#d100-units .cube');
+
+  const tensValues = ['00','10','20','30','40','50','60','70','80','90'];
+  const unitsValues = ['0','1','2','3','4','5','6','7','8','9'];
+
+  const tensFace = prepareCube(tensCube, tensDisplay, tensValues);
+  const unitsFace = prepareCube(unitsCube, unitsDisplay, unitsValues);
+
+  rollCube(tensCube, tensFace);
+  rollCube(unitsCube, unitsFace);
+
+  const display = value === 100 ? '100' : String(value).padStart(2, '0');
+  showTrayResult(display, 'd100');
+  addToHistory({ type: 'd100', dice: [value], result: display, outcome: null, sl: null, hitLocation: null, note: '' });
+}
+
+// --- Wire d10 click ---
+function handleD10Roll() {
+  const value = rollD10();
+  const cube = document.querySelector('#d10-cube .cube');
+  const d10Values = ['1','2','3','4','5','6','7','8','9','10'];
+  const faceIdx = prepareCube(cube, String(value), d10Values);
+  rollCube(cube, faceIdx);
+
+  showTrayResult(String(value), 'd10');
+  addToHistory({ type: 'd10', dice: [value], result: String(value), outcome: null, sl: null, hitLocation: null, note: '' });
+}
+
+document.getElementById('d100-tens').addEventListener('click', handleD100Roll);
+document.getElementById('d100-units').addEventListener('click', handleD100Roll);
+document.getElementById('d10-cube').addEventListener('click', handleD10Roll);
+
+// Keyboard: Enter/Space on focused cube triggers roll
+document.getElementById('d100-tens').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleD100Roll(); } });
+document.getElementById('d100-units').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleD100Roll(); } });
+document.getElementById('d10-cube').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleD10Roll(); } });
+
+
+/* ===== SKILL CHECK ===== */
+
+// Hit location table (WFRP 4e — reversed d100 digits)
+// Reference: rules/dict/БОЙ.md
+// 01–10: Head, 11–20: R.Arm, 21–30: L.Arm, 31–55: Body, 56–80: Body, 81–90: R.Leg, 91–00: L.Leg
+function getHitLocation(roll) {
+  // Reverse digits: 47 → 74, 05 → 50, 100 → 001 → 1 (treat as 01)
+  let str = String(roll).padStart(2, '0');
+  if (roll === 100) str = '00';
+  const reversed = parseInt(str[1] + str[0]);
+  const loc = reversed === 0 ? 100 : reversed; // 00 → 100
+
+  if (loc >= 1 && loc <= 10) return 'Голова';
+  if (loc >= 11 && loc <= 20) return 'Правая рука';
+  if (loc >= 21 && loc <= 30) return 'Левая рука';
+  if (loc >= 31 && loc <= 55) return 'Тело';
+  if (loc >= 56 && loc <= 80) return 'Тело';
+  if (loc >= 81 && loc <= 90) return 'Правая нога';
+  if (loc >= 91 && loc <= 100) return 'Левая нога';
+  return '?';
+}
+
+function isDouble(roll) {
+  if (roll === 100) return true; // 00
+  const str = String(roll).padStart(2, '0');
+  return str[0] === str[1] && roll !== 100;
+}
+
+function clampModifier(mod) {
+  mod = parseInt(mod) || 0;
+  return Math.max(-30, Math.min(30, mod));
+}
+
+function resolveSkillCheck(target, modifier, roll) {
+  const effTarget = target + modifier;
+  const success = roll <= effTarget;
+
+  // Guaranteed success/failure
+  const guaranteedSuccess = roll >= 1 && roll <= 5;
+  const guaranteedFailure = roll >= 96 && roll <= 100;
+  const dbl = isDouble(roll);
+
+  let outcome, sl;
+  if (success) {
+    sl = Math.floor((effTarget - roll) / 10);
+    outcome = 'success';
+    if (dbl) outcome = 'critical';
+  } else {
+    sl = Math.floor((roll - effTarget) / 10);
+    outcome = 'fail';
+    if (dbl) outcome = 'fumble';
+  }
+
+  // Guaranteed overrides
+  if (guaranteedSuccess) {
+    outcome = success ? (dbl ? 'critical' : 'success') : 'success';
+    if (dbl && success) outcome = 'critical';
+  }
+  if (guaranteedFailure) {
+    outcome = 'fail';
+    if (dbl || roll === 100) outcome = 'fumble';
+  }
+
+  return { outcome, sl, hitLocation: getHitLocation(roll), effectiveTarget: effTarget };
+}
+
+function handleSkillCheck() {
+  const target = parseInt(document.getElementById('sc-target').value) || 50;
+  const rawMod = parseInt(document.getElementById('sc-mod').value) || 0;
+  const modifier = clampModifier(rawMod);
+
+  // Update input if clamped
+  if (rawMod !== modifier) {
+    document.getElementById('sc-mod').value = modifier;
+  }
+
+  const roll = rollD100();
+  const res = resolveSkillCheck(target, modifier, roll);
+
+  // Animate d100 cubes
+  const tens = Math.floor(roll / 10) * 10;
+  const units = roll % 10;
+  const tensDisplay = tens === 0 ? '00' : String(tens);
+  const unitsDisplay = String(units);
+  const tensCube = document.querySelector('#d100-tens .cube');
+  const unitsCube = document.querySelector('#d100-units .cube');
+  const tensValues = ['00','10','20','30','40','50','60','70','80','90'];
+  const unitsValues = ['0','1','2','3','4','5','6','7','8','9'];
+  const tensFace = prepareCube(tensCube, tensDisplay, tensValues);
+  const unitsFace = prepareCube(unitsCube, unitsDisplay, unitsValues);
+  rollCube(tensCube, tensFace);
+  rollCube(unitsCube, unitsFace);
+
+  // Display resolution
+  const resEl = document.getElementById('sc-resolution');
+  const outcomeLabels = {
+    success: 'Успех',
+    fail: 'Провал',
+    critical: 'Критический успех!',
+    fumble: 'Заминка!'
+  };
+
+  const slDisplay = res.sl >= 0 ? `+${res.sl}` : String(res.sl);
+  const rollDisplay = roll === 100 ? '100' : String(roll).padStart(2, '0');
+
+  resEl.className = `resolution show ${res.outcome}`;
+  resEl.innerHTML = `
+    <div class="outcome ${res.outcome}">${outcomeLabels[res.outcome]}</div>
+    <div class="resolution-item">Бросок: <strong>${rollDisplay}</strong> против <strong>${res.effectiveTarget}</strong> (цель ${target}${modifier >= 0 ? '+' : ''}${modifier})</div>
+    <div class="resolution-item">УУ/УП: <strong>${slDisplay}</strong></div>
+    <div class="resolution-item">Локация: <strong>${res.hitLocation}</strong></div>
+  `;
+
+  showTrayResult(rollDisplay, 'Проверка навыка');
+
+  addToHistory({
+    type: 'skill',
+    dice: [roll],
+    target: target,
+    modifier: modifier,
+    result: rollDisplay,
+    outcome: res.outcome,
+    sl: res.sl,
+    hitLocation: res.hitLocation,
+    note: ''
+  });
+}
+
+document.getElementById('sc-roll').addEventListener('click', handleSkillCheck);
+
+
+/* ===== DAMAGE ===== */
+
+function resolveDamage(n, mod, quality) {
+  // Roll n d10s with exploding 10s
+  const allDice = [];
+  for (let i = 0; i < n; i++) {
+    let val = rollD10();
+    const explosions = [val];
+    while (val === 10) {
+      val = rollD10();
+      explosions.push(val);
+    }
+    allDice.push({ values: explosions, total: explosions.reduce((a, b) => a + b, 0), exploded: explosions.length > 1 });
+  }
+
+  // Sort by total ascending for cancellation
+  const sorted = [...allDice].sort((a, b) => a.total - b.total);
+
+  // Cancel lowest dice
+  const cancelCount = quality === '-2s' ? 2 : (quality === '-1s' ? 1 : 0);
+  const cancelledIndices = new Set();
+  for (let i = 0; i < Math.min(cancelCount, sorted.length); i++) {
+    cancelledIndices.add(allDice.indexOf(sorted[i]));
+  }
+
+  // Sum non-cancelled
+  let sum = 0;
+  allDice.forEach((d, idx) => {
+    if (!cancelledIndices.has(idx)) sum += d.total;
+  });
+  sum += mod;
+
+  return { dice: allDice, cancelledIndices, total: sum, modifier: mod, quality };
+}
+
+function handleDamage() {
+  const n = parseInt(document.getElementById('dmg-count').value) || 2;
+  const mod = parseInt(document.getElementById('dmg-mod').value) || 0;
+  const quality = document.getElementById('dmg-quality').value;
+
+  const res = resolveDamage(n, mod, quality);
+
+  // Display
+  const resEl = document.getElementById('dmg-resolution');
+  resEl.className = 'resolution show';
+
+  const diceHtml = res.dice.map((d, idx) => {
+    const cancelled = res.cancelledIndices.has(idx);
+    const explodedClass = d.exploded ? 'exploded' : '';
+    const cancelledClass = cancelled ? 'cancelled' : '';
+    const label = d.values.join('+');
+    return `<span class="die-pill ${cancelledClass} ${explodedClass}" title="${d.exploded ? 'Взрывной' : ''}">${label}</span>`;
+  }).join('');
+
+  const qualLabel = quality === 'none' ? '' : ` (${quality})`;
+
+  resEl.innerHTML = `
+    <div class="outcome" style="color:var(--gold);">Урон: ${res.total}</div>
+    <div class="dice-display">${diceHtml}</div>
+    <div class="resolution-item">Сумма: <strong>${res.total}</strong> урона${qualLabel}</div>
+  `;
+
+  showTrayResult(String(res.total), `Урон ${n}d10+${mod}`);
+
+  // Prepare dice values for history
+  const diceValues = res.dice.map(d => d.total);
+
+  addToHistory({
+    type: 'damage',
+    dice: diceValues,
+    target: null,
+    modifier: mod,
+    result: String(res.total),
+    outcome: null,
+    sl: null,
+    hitLocation: null,
+    note: quality !== 'none' ? quality : ''
+  });
+}
+
+document.getElementById('dmg-roll').addEventListener('click', handleDamage);
+
+
+/* ===== SCATTER ===== */
+
+function resolveScatter() {
+  const dirRoll = rollD10();
+  const distRoll1 = rollD10();
+  const distRoll2 = rollD10();
+  const distance = distRoll1 + distRoll2;
+
+  let direction, arrow;
+  switch (dirRoll) {
+    case 1: direction = 'Север (N)'; arrow = '↑'; break;
+    case 2: direction = 'Северо-восток (NE)'; arrow = '↗'; break;
+    case 3: direction = 'Восток (E)'; arrow = '→'; break;
+    case 4: direction = 'Юго-восток (SE)'; arrow = '↘'; break;
+    case 5: direction = 'Юг (S)'; arrow = '↓'; break;
+    case 6: direction = 'Юго-запад (SW)'; arrow = '↙'; break;
+    case 7: direction = 'Запад (W)'; arrow = '←'; break;
+    case 8: direction = 'Северо-запад (NW)'; arrow = '↖'; break;
+    case 9: direction = 'К стрелку'; arrow = '⤺'; break;
+    case 10: direction = 'К цели (нет отклонения)'; arrow = '◎'; break;
+  }
+
+  return { dirRoll, distance, direction, arrow, distDice: [distRoll1, distRoll2] };
+}
+
+function handleScatter() {
+  const res = resolveScatter();
+  const resEl = document.getElementById('scatter-resolution');
+  resEl.className = 'resolution show';
+
+  resEl.innerHTML = `
+    <div class="outcome" style="color:var(--gold);font-size:2rem;">${res.arrow}</div>
+    <div class="resolution-item">Направление: <strong>${res.direction}</strong> (d10: ${res.dirRoll})</div>
+    <div class="resolution-item">Дистанция: <strong>${res.distance}</strong> ярдов (2d10: ${res.distDice[0]} + ${res.distDice[1]})</div>
+  `;
+
+  showTrayResult(`${res.arrow} ${res.distance}yd`, 'Разброс');
+
+  addToHistory({
+    type: 'scatter',
+    dice: [res.dirRoll, ...res.distDice],
+    target: null,
+    modifier: null,
+    result: `${res.direction} ${res.distance}yd`,
+    outcome: null,
+    sl: null,
+    hitLocation: null,
+    note: ''
+  });
+}
+
+document.getElementById('scatter-roll').addEventListener('click', handleScatter);
+
+
+/* ===== QUICK SKILLS ===== */
+
+// Basic WFRP 4e skills → governing characteristic
+// Russian abbreviations: С=Сила, В=Выносливость, Л=Ловкость, И=Инициатива, Инт=Интеллект, СВ=Сила Воли, Хар=Харизма
+const SKILLS = [
+  { name: 'Атлетика', char: 'С', charFull: 'Сила (С)' },
+  { name: 'Обаяние', char: 'Хар', charFull: 'Харизма (Хар)' },
+  { name: 'Хладнокровие', char: 'И', charFull: 'Инициатива (И)' },
+  { name: 'Выносливость', char: 'В', charFull: 'Выносливость (В)' },
+  { name: 'Развлечения', char: 'Хар', charFull: 'Харизма (Хар)' },
+  { name: 'Сплетни', char: 'Хар', charFull: 'Харизма (Хар)' },
+  { name: 'Запугивание', char: 'С', charFull: 'Сила (С)' },
+  { name: 'Лидерство', char: 'Хар', charFull: 'Харизма (Хар)' },
+  { name: 'Навигация', char: 'И', charFull: 'Инициатива (И)' },
+  { name: 'Восприятие', char: 'И', charFull: 'Инициатива (И)' },
+  { name: 'Верховая езда', char: 'Л', charFull: 'Ловкость (Л)' },
+  { name: 'Скрытность', char: 'Л', charFull: 'Ловкость (Л)' },
+];
+
+function renderSkills() {
+  const grid = document.getElementById('skills-grid');
+  grid.innerHTML = SKILLS.map(s => `
+    <button class="skill-chip" data-char="${s.charFull}" aria-label="Навык ${s.name}, характеристика ${s.char}">
+      <span>${s.name}</span>
+      <span class="char">${s.char}</span>
+    </button>
+  `).join('');
+
+  grid.querySelectorAll('.skill-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const targetInput = document.getElementById('sc-target');
+      targetInput.value = '';
+      targetInput.focus();
+
+      const hintEl = document.getElementById('sc-hint');
+      const hintText = document.getElementById('sc-hint-text');
+      hintText.textContent = `→ Бросок против ${chip.dataset.char}`;
+      hintEl.style.display = 'flex';
+
+      // Scroll to skill check section
+      document.getElementById('sc-target').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  });
+}
+
+renderSkills();
+
+
+/* ===== HISTORY ===== */
+
+const HISTORY_KEY = 'wfrp-dice-history';
+const HISTORY_CAP = 500;
+
+function loadHistory() {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveHistory(entries) {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(entries));
+  } catch (e) {
+    // Quota exceeded — drop oldest 50 and retry
+    if (entries.length > 50) {
+      entries = entries.slice(0, entries.length - 50);
+      try {
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(entries));
+      } catch (e2) {
+        showToast('Не удалось сохранить историю');
+      }
+    } else {
+      showToast('Не удалось сохранить историю');
+    }
+  }
+}
+
+function addToHistory(entry) {
+  const full = {
+    id: Date.now() + '-' + Math.random().toString(36).substr(2, 5),
+    timestamp: new Date().toISOString(),
+    ...entry
+  };
+
+  let history = loadHistory();
+  history.unshift(full); // prepend (newest first)
+
+  // FIFO eviction — oldest is at the end
+  if (history.length > HISTORY_CAP) {
+    history = history.slice(0, HISTORY_CAP);
+  }
+
+  saveHistory(history);
+  renderHistory();
+}
+
+function formatTime(iso) {
+  const d = new Date(iso);
+  return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+function getOutcomeLabel(outcome) {
+  const labels = {
+    success: 'Успех',
+    fail: 'Провал',
+    critical: 'Крит',
+    fumble: 'Заминка'
+  };
+  return labels[outcome] || '';
+}
+
+function getTypeLabel(type) {
+  const labels = {
+    d100: 'd100',
+    d10: 'd10',
+    skill: 'Навык',
+    damage: 'Урон',
+    scatter: 'Разброс'
+  };
+  return labels[type] || type;
+}
+
+function renderHistory() {
+  const history = loadHistory();
+  const listEl = document.getElementById('history-list');
+
+  if (history.length === 0) {
+    listEl.innerHTML = '<div class="history-empty">История пуста. Бросьте кубик.</div>';
+    return;
+  }
+
+  listEl.innerHTML = history.map(entry => {
+    const outcomeClass = entry.outcome || '';
+    const outcomeTag = entry.outcome ? `<span class="outcome-tag ${outcomeClass}">${getOutcomeLabel(entry.outcome)}</span>` : '';
+    const slDisplay = entry.sl !== null ? ` · УУ/УП ${entry.sl >= 0 ? '+' : ''}${entry.sl}` : '';
+    const hitLoc = entry.hitLocation ? ` · ${entry.hitLocation}` : '';
+    const modDisplay = entry.modifier !== null && entry.modifier !== undefined ? ` · мод ${entry.modifier >= 0 ? '+' : ''}${entry.modifier}` : '';
+    const noteDisplay = entry.note ? ` · ${entry.note}` : '';
+
+    return `
+      <div class="history-entry ${outcomeClass}">
+        <span class="time">${formatTime(entry.timestamp)}</span>
+        <span class="desc">
+          ${getTypeLabel(entry.type)}: <span class="roll-val">${entry.result}</span>${outcomeTag}
+          <span style="color:var(--text-dim);font-size:0.8rem;">${slDisplay}${hitLoc}${modDisplay}${noteDisplay}</span>
+        </span>
+        <span class="meta">${entry.dice ? entry.dice.join(', ') : ''}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+// Clear history
+document.getElementById('clear-history').addEventListener('click', () => {
+  if (confirm('Очистить всю историю бросков?')) {
+    localStorage.removeItem(HISTORY_KEY);
+    renderHistory();
+    showToast('История очищена');
+  }
+});
+
+// Copy as Markdown
+document.getElementById('copy-md').addEventListener('click', () => {
+  const history = loadHistory();
+  if (history.length === 0) {
+    showToast('Нет бросков для копирования');
+    return;
+  }
+
+  const headers = ['Время', 'Тип', 'Бросок', 'Цель', 'Модификатор', 'Исход', 'УУ/УП', 'Локация'];
+  const rows = history.map(e => [
+    formatTime(e.timestamp),
+    getTypeLabel(e.type),
+    e.result,
+    e.target || '',
+    e.modifier !== null && e.modifier !== undefined ? e.modifier : '',
+    getOutcomeLabel(e.outcome) || '',
+    e.sl !== null ? (e.sl >= 0 ? '+' : '') + e.sl : '',
+    e.hitLocation || ''
+  ]);
+
+  const md = `| ${headers.join(' | ')} |\n| ${headers.map(() => '---').join(' | ')} |\n| ${rows.map(r => r.join(' | ')).join(' |\n| ')} |`;
+
+  navigator.clipboard.writeText(md).then(() => {
+    showToast(`Скопировано ${history.length} бросков`);
+  }).catch(() => {
+    showToast('Не удалось скопировать');
+  });
+});
+
+
+/* ===== TOAST ===== */
+
+let toastTimeout;
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+
+/* ===== INIT ===== */
+
+renderHistory();
+</script>
+</body>
+</html>
